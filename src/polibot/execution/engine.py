@@ -33,4 +33,3 @@ class SimulatedExecutionEngine:
         if now >= approval.valid_until or now >= proposal.expires_at:
             raise ExecutionRejected("approval or proposal has expired")
         return f"{self._mode.value}:recorded:{proposal.proposal_id}"
-

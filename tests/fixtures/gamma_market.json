@@ -1,0 +1,23 @@
+{
+  "id": "market-123",
+  "question": "Will the example occur?",
+  "conditionId": "0xcondition",
+  "questionID": "0xquestion",
+  "slug": "will-example-occur",
+  "outcomes": "[\"Yes\", \"No\"]",
+  "clobTokenIds": "[\"token-yes\", \"token-no\"]",
+  "active": true,
+  "closed": false,
+  "restricted": false,
+  "enableOrderBook": true,
+  "acceptingOrders": true,
+  "negRisk": false,
+  "orderPriceMinTickSize": "0.01",
+  "orderMinSize": "5",
+  "feesEnabled": true,
+  "makerBaseFee": "0",
+  "takerBaseFee": "0.04",
+  "startDate": "2026-09-01T00:00:00Z",
+  "endDate": "2026-12-31T23:59:59Z",
+  "events": [{"id": "event-456"}]
+}

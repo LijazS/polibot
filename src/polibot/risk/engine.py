@@ -1,7 +1,8 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Protocol
+from uuid import UUID
 
 from polibot.domain.models import (
     OpportunityProposal,
@@ -17,11 +18,25 @@ class RiskLimits:
     minimum_net_edge: Decimal
     maximum_order_notional: Decimal
     maximum_global_exposure: Decimal
+    maximum_strategy_exposure: Decimal = Decimal("1000")
+    maximum_market_exposure: Decimal = Decimal("1000")
+    maximum_event_exposure: Decimal = Decimal("1000")
+    maximum_unmatched_exposure: Decimal = Decimal("100")
+    maximum_unmatched_duration: timedelta = timedelta(seconds=5)
+    maximum_slippage: Decimal = Decimal("100")
+    maximum_consecutive_execution_errors: int = 3
+    maximum_daily_realized_loss: Decimal = Decimal("100")
 
 
 @dataclass(frozen=True)
 class RiskContext:
     current_global_exposure: Decimal
+    strategy_exposure: dict[str, Decimal] = field(default_factory=dict)
+    market_exposure: dict[str, Decimal] = field(default_factory=dict)
+    event_exposure: dict[str, Decimal] = field(default_factory=dict)
+    consumed_proposal_ids: frozenset[UUID] = frozenset()
+    consecutive_execution_errors: int = 0
+    daily_realized_pnl: Decimal = Decimal("0")
     reconciliation_healthy: bool = True
     system_healthy: bool = True
 
@@ -42,6 +57,14 @@ class DeterministicRiskEngine:
         reasons: list[RiskRejectionReason] = []
         if not proposal.market_active:
             reasons.append(RiskRejectionReason.MARKET_INACTIVE)
+        if not proposal.market_tradable:
+            reasons.append(RiskRejectionReason.MARKET_NOT_TRADABLE)
+        if not proposal.restriction_passed:
+            reasons.append(RiskRejectionReason.RESTRICTION_FAILED)
+        if not proposal.token_mapping_valid:
+            reasons.append(RiskRejectionReason.INVALID_TOKEN_MAPPING)
+        if not proposal.quantity_rules_valid:
+            reasons.append(RiskRejectionReason.INVALID_QUANTITY)
         if now - proposal.book_received_at > self._limits.stale_book_after:
             reasons.append(RiskRejectionReason.STALE_BOOK)
         if now >= proposal.expires_at:
@@ -65,11 +88,49 @@ class DeterministicRiskEngine:
             reasons.append(RiskRejectionReason.INSUFFICIENT_NET_EDGE)
         if proposal.execution_plan.maximum_total_cost > self._limits.maximum_order_notional:
             reasons.append(RiskRejectionReason.ORDER_NOTIONAL_LIMIT)
+        if proposal.modeled_slippage > self._limits.maximum_slippage:
+            reasons.append(RiskRejectionReason.SLIPPAGE_LIMIT)
+        if (
+            proposal.execution_plan.maximum_unmatched_exposure
+            > self._limits.maximum_unmatched_exposure
+        ):
+            reasons.append(RiskRejectionReason.UNMATCHED_EXPOSURE_LIMIT)
+        if (
+            proposal.execution_plan.maximum_unmatched_duration
+            > self._limits.maximum_unmatched_duration
+        ):
+            reasons.append(RiskRejectionReason.UNMATCHED_DURATION_LIMIT)
+        proposal_cost = proposal.execution_plan.maximum_total_cost
+        if context.strategy_exposure.get(proposal.strategy_id, Decimal("0")) + proposal_cost > (
+            self._limits.maximum_strategy_exposure
+        ):
+            reasons.append(RiskRejectionReason.STRATEGY_EXPOSURE_LIMIT)
+        if any(
+            context.market_exposure.get(market_id, Decimal("0")) + proposal_cost
+            > self._limits.maximum_market_exposure
+            for market_id in proposal.market_ids
+        ):
+            reasons.append(RiskRejectionReason.MARKET_EXPOSURE_LIMIT)
+        if any(
+            context.event_exposure.get(event_id, Decimal("0")) + proposal_cost
+            > self._limits.maximum_event_exposure
+            for event_id in proposal.event_ids
+        ):
+            reasons.append(RiskRejectionReason.EVENT_EXPOSURE_LIMIT)
         if (
             context.current_global_exposure + proposal.execution_plan.maximum_total_cost
             > self._limits.maximum_global_exposure
         ):
             reasons.append(RiskRejectionReason.GLOBAL_EXPOSURE_LIMIT)
+        if proposal.proposal_id in context.consumed_proposal_ids:
+            reasons.append(RiskRejectionReason.DUPLICATE_PROPOSAL)
+        if (
+            context.consecutive_execution_errors
+            >= self._limits.maximum_consecutive_execution_errors
+        ):
+            reasons.append(RiskRejectionReason.EXECUTION_ERROR_LIMIT)
+        if context.daily_realized_pnl < -self._limits.maximum_daily_realized_loss:
+            reasons.append(RiskRejectionReason.DAILY_LOSS_LIMIT)
         if not context.reconciliation_healthy:
             reasons.append(RiskRejectionReason.RECONCILIATION_UNHEALTHY)
         if not context.system_healthy:

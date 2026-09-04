@@ -13,4 +13,3 @@ def test_default_mode_is_not_live() -> None:
 def test_live_mode_fails_closed_without_separate_enablement() -> None:
     with pytest.raises(ValidationError, match="LIVE mode requires"):
         Settings(execution_mode=ExecutionMode.LIVE, _env_file=None)
-

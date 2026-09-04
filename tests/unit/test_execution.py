@@ -19,4 +19,3 @@ async def test_execution_without_approval_is_rejected(
 def test_bootstrap_executor_cannot_be_live() -> None:
     with pytest.raises(ExecutionRejected, match="does not support LIVE"):
         SimulatedExecutionEngine(ExecutionMode.LIVE)
-

@@ -10,3 +10,7 @@ snapshot, and only resume after buffered updates reconcile. Unknown sequencing o
 stale books fail closed. Retention, compression, partitioning, and current stream
 semantics remain implementation-plan decisions.
 
+Implemented message support follows the official 2026-09-04 documentation record:
+book snapshot, price change, last trade, and tick-size change. The REST snapshot
+endpoint is the recovery authority. WebSocket reconnect is bounded with capped
+exponential backoff and the documented 10-second client ping default.

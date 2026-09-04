@@ -10,3 +10,7 @@ disconnects, and settlement mechanics. Maker research additionally models queue
 assumptions and adverse selection. Each report discloses assumptions, data gaps, and
 P&L components. Displayed historical liquidity is never treated as a guaranteed fill.
 
+The implemented archive uses schema-versioned Parquet envelopes. Replay sorts by
+source time, receipt time, recorder ordinal, and record ID, and filters by market/time.
+Its manifest fixes schema, strategy version, configuration fingerprint, latency,
+and fee models. `polibot replay <archive>` never initializes network or execution.

@@ -50,4 +50,3 @@ def valid_proposal(now: datetime) -> OpportunityProposal:
             maximum_unmatched_exposure=Decimal("0.49"),
         ),
     )
-

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from enum import StrEnum
 from uuid import UUID, uuid4
 
@@ -13,24 +14,58 @@ class FrozenModel(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
 
+class Tradability(StrEnum):
+    DISCOVERED = "discovered"
+    TRADABLE = "tradable"
+    CLOSED = "closed"
+    RESTRICTED = "restricted"
+    ORDERBOOK_DISABLED = "orderbook_disabled"
+    INVALID_METADATA = "invalid_metadata"
+    UNSUPPORTED = "unsupported"
+    UNKNOWN = "unknown"
+
+
 class Market(FrozenModel):
     market_id: str
-    event_id: str
+    event_id: str | None = None
+    condition_id: str | None = None
+    question_id: str | None = None
+    slug: str | None = None
+    title: str | None = None
+    outcome_tokens: tuple[OutcomeToken, ...] = ()
     active: bool
+    closed: bool = False
     accepting_orders: bool
+    enable_order_book: bool = False
+    restricted: bool = False
+    neg_risk: bool = False
+    tradability: Tradability = Tradability.DISCOVERED
+    minimum_tick_size: Price | None = None
+    minimum_order_size: Quantity | None = None
+    start_at: datetime | None = None
+    end_at: datetime | None = None
     metadata_observed_at: datetime
 
 
 class Event(FrozenModel):
     event_id: str
     title: str
+    slug: str | None = None
+    start_at: datetime | None = None
+    end_at: datetime | None = None
+    active: bool = False
+    closed: bool = False
+    restricted: bool = False
+    neg_risk: bool = False
     mutually_exclusive: bool | None = None
+    market_ids: tuple[str, ...] = ()
 
 
 class OutcomeToken(FrozenModel):
     token_id: str
     market_id: str
     outcome: str
+    condition_id: str | None = None
 
 
 class BookLevel(FrozenModel):
@@ -82,6 +117,7 @@ class PayoffProof(FrozenModel):
 
 
 class OrderIntent(FrozenModel):
+    intent_id: UUID = Field(default_factory=uuid4)
     market_id: str
     token_id: str
     side: str
@@ -98,26 +134,35 @@ class OrderIntent(FrozenModel):
 
 
 class ExecutionPlan(FrozenModel):
+    plan_id: UUID = Field(default_factory=uuid4)
     intents: tuple[OrderIntent, ...]
     maximum_total_cost: Money
     maximum_unmatched_exposure: Money
+    maximum_unmatched_duration: timedelta = timedelta(seconds=5)
 
 
 class OpportunityProposal(FrozenModel):
     proposal_id: UUID = Field(default_factory=uuid4)
     strategy_id: str
     market_ids: tuple[str, ...]
+    event_ids: tuple[str, ...] = ()
     observed_at: datetime
     book_received_at: datetime
     expires_at: datetime
     market_active: bool
+    market_tradable: bool = True
+    restriction_passed: bool = True
+    token_mapping_valid: bool = True
+    quantity_rules_valid: bool = True
     fee_model_known: bool
     metadata_validated: bool
     executable_depth_verified: bool
     all_in_cost: Money
+    modeled_slippage: Money = Decimal("0")
     expected_net_edge: Money
     payoff_proof: PayoffProof | None
     execution_plan: ExecutionPlan
+    evidence: dict[str, str] = Field(default_factory=dict)
 
     @field_validator("observed_at", "book_received_at", "expires_at")
     @classmethod
@@ -129,6 +174,10 @@ class OpportunityProposal(FrozenModel):
 
 class RiskRejectionReason(StrEnum):
     MARKET_INACTIVE = "market_inactive"
+    MARKET_NOT_TRADABLE = "market_not_tradable"
+    RESTRICTION_FAILED = "restriction_failed"
+    INVALID_TOKEN_MAPPING = "invalid_token_mapping"
+    INVALID_QUANTITY = "invalid_quantity"
     STALE_BOOK = "stale_book"
     EXPIRED_PROPOSAL = "expired_proposal"
     UNKNOWN_FEE_MODEL = "unknown_fee_model"
@@ -138,7 +187,16 @@ class RiskRejectionReason(StrEnum):
     INCONSISTENT_ECONOMICS = "inconsistent_economics"
     INSUFFICIENT_NET_EDGE = "insufficient_net_edge"
     ORDER_NOTIONAL_LIMIT = "order_notional_limit"
+    MARKET_EXPOSURE_LIMIT = "market_exposure_limit"
+    EVENT_EXPOSURE_LIMIT = "event_exposure_limit"
+    STRATEGY_EXPOSURE_LIMIT = "strategy_exposure_limit"
     GLOBAL_EXPOSURE_LIMIT = "global_exposure_limit"
+    UNMATCHED_EXPOSURE_LIMIT = "unmatched_exposure_limit"
+    UNMATCHED_DURATION_LIMIT = "unmatched_duration_limit"
+    SLIPPAGE_LIMIT = "slippage_limit"
+    DUPLICATE_PROPOSAL = "duplicate_proposal"
+    EXECUTION_ERROR_LIMIT = "execution_error_limit"
+    DAILY_LOSS_LIMIT = "daily_loss_limit"
     RECONCILIATION_UNHEALTHY = "reconciliation_unhealthy"
     SYSTEM_UNHEALTHY = "system_unhealthy"
 
@@ -202,6 +260,7 @@ class PnLComponentType(StrEnum):
     STRUCTURAL_ARBITRAGE = "structural_arbitrage"
     SPREAD_CAPTURE = "spread_capture"
     INVENTORY = "inventory"
+    ADVERSE_SELECTION = "adverse_selection"
     FEES = "fees"
     SLIPPAGE = "slippage"
     MAKER_REBATE = "maker_rebate"

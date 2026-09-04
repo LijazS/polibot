@@ -12,4 +12,7 @@ build/
 htmlcov/
 .idea/
 .vscode/
-
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log

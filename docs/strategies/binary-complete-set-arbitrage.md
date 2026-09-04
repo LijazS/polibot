@@ -63,6 +63,8 @@ promotion, investigate unmatched legs/reconciliation, and control kill switches.
 
 ## Known unknowns
 
-Verify current official tick/minimum, fee, supported order, atomicity, settlement,
-and API sequencing behavior at implementation time.
-
+The offline implementation walks actual displayed depth, applies a provenance-bearing
+dynamic fee model and buffers, evaluates cumulative quantities, and emits a terminal
+state proof. Property tests cover the guaranteed-payout inequality. Current live
+liquidity, end-to-end fill behavior, settlement cost, and opportunity frequency remain
+`PENDING_DATA`.

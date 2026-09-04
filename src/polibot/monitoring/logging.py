@@ -16,4 +16,3 @@ def configure_logging(level: str = "INFO") -> None:
             getattr(logging, level.upper(), logging.INFO)
         ),
     )
-

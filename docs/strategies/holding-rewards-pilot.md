@@ -62,6 +62,6 @@ approve capital and halt on unexplained credits, eligibility, or balance differe
 
 ## Known unknowns
 
-Verify current official eligibility discovery, accrual calculation, payment timing,
-qualifying custody, program changes, exclusions, and data endpoints.
-
+Observation models now require dated eligibility, parameters, provenance, expected
+and actual rewards and keep differences separate from trading P&L. Eligibility,
+accrual/payment rules, qualifying custody, and actual credits remain `PENDING_DATA`.

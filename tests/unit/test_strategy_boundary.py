@@ -8,4 +8,3 @@ def test_strategy_contract_only_emits_proposals() -> None:
     assert "submit_order" not in Strategy.__dict__
     return_type = str(get_type_hints(Strategy.evaluate)["return"])
     assert "OpportunityProposal" in return_type
-

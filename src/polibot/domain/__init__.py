@@ -6,6 +6,7 @@ from polibot.domain.models import (
     RiskApproval,
     RiskDecision,
     RiskRejectionReason,
+    Tradability,
 )
 from polibot.domain.values import Money, Price, Quantity, SignedMoney
 
@@ -21,4 +22,5 @@ __all__ = [
     "RiskDecision",
     "RiskRejectionReason",
     "SignedMoney",
+    "Tradability",
 ]

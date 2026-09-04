@@ -23,4 +23,3 @@ def test_binary_float_is_rejected(field: str) -> None:
     values[field] = 0.5
     with pytest.raises(ValidationError, match="binary floating-point"):
         FinancialExample(**values)
-

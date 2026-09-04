@@ -19,6 +19,11 @@ volatility and event risk and skewed by inventory. Expected value separates spre
 capture, adverse selection, inventory mark/realization, fees, rebates, liquidity
 rewards, and operational loss. Spread is not profit.
 
+The implemented shadow model calculates top-level midpoint, size-weighted microprice,
+and imbalance with Decimal arithmetic. It applies configurable half-spread and
+inventory skew, caps prices, and emits expiring post-only shadow quotes. Empty/crossed
+books, inventory cap, excess volatility, near resolution, or event risk emit no quote.
+
 ## Inputs and opportunity detection
 
 Use books, trades, imbalance, volatility, time to resolution, inventory, fills,
@@ -63,5 +68,6 @@ ADR and explicit operator decision. Humans handle incidents and inventory except
 
 ## Known unknowns
 
-Verify current official maker order semantics, self-trade controls, queue behavior,
-rebates/rewards, cancellation/heartbeat facilities, limits, and market-integrity rules.
+Post-only and heartbeat/cancel semantics were verified on 2026-09-04. Queue position,
+self-trade controls, adverse-selection calibration, current incentives, and empirical
+fill quality remain `PENDING_DATA`.

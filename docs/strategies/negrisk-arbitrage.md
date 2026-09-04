@@ -63,6 +63,7 @@ model ambiguity or unmatched portfolios.
 
 ## Known unknowns
 
-Verify current official NegRisk metadata, augmentation rules, Other behavior,
-conversion mechanics, fees, and order constraints before implementation.
-
+The offline vanilla model enumerates explicit terminal states and uses a deterministic
+Decimal vertex solver. Unknown augmentation, Other, dynamic/incomplete sets, and
+conversion semantics are rejected as unsupported. Current official conversion wire
+encoding and empirical opportunity/fill behavior remain unresolved.

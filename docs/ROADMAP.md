@@ -11,6 +11,10 @@ are disclosed; binary and validated vanilla NegRisk scanners pass unit/property
 tests; Holding Rewards observations are captured; deterministic rejection tests
 pass; and paper accounting reconciles without unexplained differences.
 
+Engineering state: `TESTED_OFFLINE` on 2026-09-05. Public connectivity, PostgreSQL
+service integration, sustained operation, and strategy effectiveness remain evidence
+gates; V1 feature completion does not imply profitability.
+
 ## V1.1 — sustained shadow validation
 
 Exit only after a defined-duration shadow run has availability and data-quality
@@ -27,11 +31,18 @@ and reconciliation; kill/cancel controls and runbooks are exercised; and tightly
 capped structural execution has controlled evidence. This gate does not promote
 market making.
 
+Non-live infrastructure state: `TESTED_OFFLINE` on 2026-09-05. The state machine,
+fake-only boundaries, reconciliation, kill/recovery gates, and Terraform scaffold
+exist. The guarded micro-live exit gate is not met and LIVE remains hard-disabled.
+
 ## V2.x — market-making shadow research
 
 Measure spread capture, inventory, adverse selection, fees, rebates, rewards, and
 operational failures separately. Live promotion requires its own ADR, quantitative
 thresholds, controlled validation, and operator approval.
+
+Shadow quote generation is `TESTED_OFFLINE`; empirical fill, queue, adverse-selection,
+inventory, and P&L evidence is `PENDING_DATA`.
 
 ## V3 candidates
 
@@ -39,4 +50,3 @@ Live inventory-aware market making, formal cross-market relationship solving,
 LLM-assisted candidate discovery followed by deterministic validation, richer
 research tooling, and justified multi-wallet support. Rust, ClickHouse, managed
 deployment, or Kubernetes require measured need; EKS is not a default destination.
-

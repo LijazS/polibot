@@ -10,17 +10,25 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
   "fastapi>=0.115,<1",
+  "httpx>=0.27,<1",
   "pydantic>=2.9,<3",
   "pydantic-settings>=2.5,<3",
   "sqlalchemy[asyncio]>=2.0,<3",
   "asyncpg>=0.29,<1",
+  "alembic>=1.13,<2",
+  "polars>=1.8,<2",
+  "prometheus-client>=0.21,<1",
   "structlog>=24.4,<26",
   "uvicorn>=0.30,<1",
+  "websockets>=14,<17",
 ]
+
+[project.scripts]
+polibot = "polibot.cli:main"
 
 [project.optional-dependencies]
 dev = [
-  "httpx>=0.27,<1",
+  "hypothesis>=6.112,<7",
   "mypy>=1.11,<2",
   "pytest>=8.3,<9",
   "pytest-asyncio>=0.24,<1",
@@ -33,6 +41,7 @@ packages = ["src/polibot"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = ["public_api: optional read-only test against a public API"]
 
 [tool.ruff]
 target-version = "py312"
@@ -45,4 +54,3 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 python_version = "3.12"
 strict = true
 packages = ["polibot"]
-
