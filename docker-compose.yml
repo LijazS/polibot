@@ -1,0 +1,30 @@
+services:
+  app:
+    build: .
+    environment:
+      POLIBOT_EXECUTION_MODE: paper
+      POLIBOT_LIVE_TRADING_ENABLED: "false"
+      POLIBOT_DATABASE_URL: postgresql+asyncpg://polibot:polibot@postgres:5432/polibot
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: polibot
+      POSTGRES_USER: polibot
+      POSTGRES_PASSWORD: polibot
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U polibot -d polibot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - polibot-postgres:/var/lib/postgresql/data
+
+volumes:
+  polibot-postgres:
+
