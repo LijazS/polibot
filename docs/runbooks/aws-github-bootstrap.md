@@ -94,6 +94,19 @@ aws iam get-role --profile browser-login --role-name polibot-github-deploy
 aws iam get-role-policy --profile browser-login --role-name polibot-github-deploy --policy-name polibot-paper-deploy
 ```
 
+When an already-bootstrapped installation receives a reviewed infrastructure-role
+policy update, apply only that inline policy and verify it before using the dependent
+workflow:
+
+```powershell
+aws iam put-role-policy --profile browser-login --role-name polibot-github-infra --policy-name polibot-paper-infra --policy-document file://infra/bootstrap/github-infra-role-policy.json
+aws iam get-role-policy --profile browser-login --role-name polibot-github-infra --policy-name polibot-paper-infra
+```
+
+The destroy-workflow addition grants `s3:ListBucketVersions` on only the PAPER
+application bucket plus `s3:DeleteObject` and `s3:DeleteObjectVersion` on its objects.
+It does not grant deletion of the Terraform state object or state bucket.
+
 ## 4. Create and protect the GitHub `paper` environment
 
 In GitHub, open **Settings → Environments → New environment**, name it `paper`, and:

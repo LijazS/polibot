@@ -14,3 +14,7 @@ compatible with the prior application image or carry a reviewed forward-recovery
 The local PostgreSQL volume is retained across application rollbacks but is deleted with
 the EC2 root volume if Terraform destroys/replaces the instance; backup and restore are
 an open operational gate. This PAPER stack contains no real orders to cancel.
+
+Do not use full Terraform destruction as an application rollback. If complete teardown
+is genuinely intended, follow `docs/runbooks/destruction.md` and accept the documented
+loss of the local database and application-data bucket.

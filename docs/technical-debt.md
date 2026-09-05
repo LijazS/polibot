@@ -19,6 +19,11 @@
 - The AWS PAPER stack, OIDC workflow, immutable image pipeline, SSM deploy, alarm, and
   health verification are deployed. Rollback, host replacement, sustained operation,
   budget alerting, and database backup/restore still need operator exercises.
+- The PAPER destroy workflow is implemented but deliberately unexercised. Teardown and
+  recreation need a controlled drill after required PAPER data is backed up.
+- The running host remains in `us-east-1`. Measure public-data latency from `eu-west-1`
+  and `eu-west-2` before migration; use `eu-west-2` for order submission only with the
+  documented Polymarket co-location approval and never as a geoblock workaround.
 - No multi-day dataset exists. Rewards, opportunity frequency, fills, profitability,
   drawdown, reconciliation stability, and shadow-maker results are `PENDING_DATA`.
 ## AWS PAPER persistence

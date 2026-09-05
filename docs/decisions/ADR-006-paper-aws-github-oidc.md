@@ -18,6 +18,11 @@ Deploy the exact commit as an immutable ECR digest through SSM. Generate the dat
 password on the host. Require the application health response to prove PAPER mode and
 live trading disabled.
 
+Provide a separate manual, environment-protected, exact-confirmation destroy workflow.
+Serialize it with deployment and preserve the independently bootstrapped state bucket,
+state history, OIDC provider, and GitHub roles. Permit non-empty PAPER data-bucket and
+ECR deletion only through an explicit destroy-only Terraform variable.
+
 ## Consequences
 
 There are no static AWS keys, SSH ingress, public app/database, NAT gateway, RDS, load
@@ -29,6 +34,8 @@ The OIDC provider and bootstrap roles/state bucket are prerequisites outside Ter
 state. They require a one-time reviewed administrator action. AWS APIs that cannot be
 resource-scoped retain `Resource: *`; names, account/region checks, role separation,
 exact pass-role, environment trust, and Terraform configuration constrain their use.
+Full teardown intentionally destroys the host-local database, S3 application/history
+objects, ECR images, logs, alarm, and regional infrastructure; it is not a rollback.
 
 ## Rejected alternatives
 

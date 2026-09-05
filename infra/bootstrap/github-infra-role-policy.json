@@ -91,6 +91,7 @@
         "s3:GetEncryptionConfiguration",
         "s3:GetReplicationConfiguration",
         "s3:ListBucket",
+        "s3:ListBucketVersions",
         "s3:PutLifecycleConfiguration",
         "s3:PutBucketOwnershipControls",
         "s3:PutBucketPolicy",
@@ -100,6 +101,15 @@
         "s3:PutEncryptionConfiguration"
       ],
       "Resource": "arn:aws:s3:::polibot-paper-data-484632959006-us-east-1"
+    },
+    {
+      "Sid": "ApplicationBucketDestructiveCleanup",
+      "Effect": "Allow",
+      "Action": [
+        "s3:DeleteObject",
+        "s3:DeleteObjectVersion"
+      ],
+      "Resource": "arn:aws:s3:::polibot-paper-data-484632959006-us-east-1/*"
     },
     {
       "Sid": "ApplicationBucketPolicyCleanup",

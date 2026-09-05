@@ -4,17 +4,22 @@
 `484632959006` in `us-east-1`, fails on a different account, and permits only the
 `paper` environment value.
 
-The stack creates a dedicated VPC, one public subnet for outbound connectivity, an
-EC2 host with no inbound security-group rules or SSH key, an immutable ECR repository,
-a private encrypted/versioned S3 data bucket, SSM access, and CloudWatch logs/alarm.
-PostgreSQL runs locally in Docker on the host and is not exposed. There is no NAT
+The deployed stack creates a dedicated VPC, one public subnet for outbound
+connectivity, an EC2 host with no inbound security-group rules or SSH key, an
+immutable ECR repository, a private encrypted/versioned S3 data bucket, SSM access,
+and CloudWatch logs/alarm. PostgreSQL runs locally in Docker on the host and is not
+exposed. There is no NAT
 gateway, load balancer, RDS database, Kubernetes cluster, or live-trading credential.
 
 The S3 backend is partial by design. GitHub Actions supplies its bucket, key, and
 region after the one-time bootstrap in `infra/bootstrap`; S3 native lockfiles are
 enabled and DynamoDB locking is not used. Follow `docs/runbooks/aws-github-bootstrap.md`.
 
-No Terraform apply has been performed as part of repository implementation.
+Normal plans keep the application bucket and ECR repository protected against
+non-empty deletion. Only the protected destroy workflow sets
+`allow_destructive_destroy=true`; follow `docs/runbooks/destruction.md` and never set
+that variable during ordinary deployment.
+
 # Non-live AWS scaffold
 
 This root module prepares a private persistent EC2 host, encrypted RDS PostgreSQL,

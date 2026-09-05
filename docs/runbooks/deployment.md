@@ -4,6 +4,9 @@ The only authorized cloud workflow is `.github/workflows/deploy-paper.yml`, manu
 dispatched from `main` after the `paper` environment approval. Complete and verify the
 one-time bootstrap runbook first.
 
+Full-stack removal uses only `.github/workflows/destroy-paper.yml`; follow
+`docs/runbooks/destruction.md`. Never dispatch it as a rollback mechanism.
+
 The workflow validates tests, formatting, types, migrations, container build, Compose,
 shell scripts, documentation, and Terraform. It then assumes the infrastructure role,
 plans and applies the PAPER stack, assumes the deployment role, builds the exact Git

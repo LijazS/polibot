@@ -69,6 +69,7 @@ resource "aws_security_group" "host" {
 resource "aws_ecr_repository" "app" {
   name                 = local.ecr_repository_name
   image_tag_mutability = "IMMUTABLE"
+  force_delete         = var.allow_destructive_destroy
 
   encryption_configuration {
     encryption_type = "AES256"
@@ -111,7 +112,7 @@ resource "aws_ecr_lifecycle_policy" "app" {
 
 resource "aws_s3_bucket" "data" {
   bucket        = local.data_bucket_name
-  force_destroy = false
+  force_destroy = var.allow_destructive_destroy
 }
 
 resource "aws_s3_bucket_public_access_block" "data" {
@@ -340,4 +341,3 @@ resource "aws_cloudwatch_metric_alarm" "instance_status" {
   dimensions          = { InstanceId = aws_instance.app.id }
   alarm_actions       = var.alarm_email == "" ? [] : [aws_sns_topic.alarms[0].arn]
 }
-

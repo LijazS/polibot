@@ -57,9 +57,14 @@ variable "ecr_images_to_retain" {
   default = 20
 }
 
+variable "allow_destructive_destroy" {
+  description = "Permit emptying the PAPER data bucket and ECR repository during an explicitly approved destroy. Never set during normal apply."
+  type        = bool
+  default     = false
+}
+
 variable "alarm_email" {
   description = "Optional email for the single EC2 status alarm; confirmation is manual."
   type        = string
   default     = ""
 }
-

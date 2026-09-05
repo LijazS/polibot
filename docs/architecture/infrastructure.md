@@ -18,7 +18,31 @@ bucket and native S3 lockfile. Deployment is manual, serialized, protected by th
 `paper` GitHub environment, tied to `main`, and uses the exact commit SHA plus the ECR
 digest returned after push.
 
+Destruction is also manual, serialized with deployment, protected by the same
+environment, restricted to `main`, and requires an exact typed confirmation. Its
+explicit destructive Terraform variable permits deletion of the non-empty PAPER S3
+and ECR resources only for that destroy plan. The state bucket, state history, OIDC
+provider, and GitHub roles remain outside the stack and survive teardown.
+
+## Region assessment
+
+The deployed PAPER host remains in `us-east-1`. As of 2026-09-05, Polymarket's official
+[trading overview](https://docs.polymarket.com/trading/overview) identifies `eu-west-2`
+as the primary-server region and says approved KYC/KYB participants can obtain direct
+co-location there for the lowest possible latency. The same documentation identifies
+`eu-west-1` as the closest non-georestricted region. Its
+[geographic restrictions](https://docs.polymarket.com/api-reference/geoblock) must be
+checked before any order path is considered.
+
+For public-data PAPER collection, a normal `eu-west-2` EC2 host is expected to reduce
+network distance relative to `us-east-1`, but it is not the documented direct
+co-location entitlement and exact latency must be measured. For any future eligible
+order submission, prefer `eu-west-1` unless Polymarket has explicitly approved
+`eu-west-2` co-location for the operator. Cloud placement must never be used to evade
+geographic restrictions. Region migration requires a separate reviewed plan because
+it replaces regional resources and can destroy the host-local database.
+
 There is no NAT gateway, load balancer, RDS, Lambda core loop, EKS, SSH, static AWS
-key, publicly reachable app/database, or geographic-restriction workaround. No apply
-has occurred. Backups/restores, cost alarms, host replacement, and sustained runtime
-behavior still require operator exercises.
+key, publicly reachable app/database, or geographic-restriction workaround.
+Backups/restores, cost alarms, host replacement, teardown/recreation, and sustained
+runtime behavior still require operator exercises.

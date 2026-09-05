@@ -26,6 +26,7 @@ Strategy effectiveness and long-running operational behavior are not proven.
 | Wallet / exchange / settlement boundaries | TESTED_OFFLINE | Protocols and deterministic fakes only; no real signer, authenticated transport, or broadcast |
 | Reconciliation / kill switches / recovery | TESTED_OFFLINE | State comparison, scoped blockers, rebuild/reconcile/unknown-state restart gate |
 | AWS PAPER deployment | DEPLOYED_PAPER | Workflow run `33963697738`; instance `i-0a24009387e20f235`; SHA `a3545a2`; digest `sha256:ec3988...26cdd` |
+| AWS PAPER destruction | IMPLEMENTED_NOT_EXERCISED | Manual main-only workflow; exact confirmation, protected plan/apply, OIDC, shared deployment lock, bootstrap preservation |
 | Shadow market making | TESTED_OFFLINE | Decimal midpoint/microprice/imbalance, inventory skew and shutdowns; fills/P&L `PENDING_DATA` |
 
 ## Evidence gates
@@ -55,6 +56,13 @@ Strategy effectiveness and long-running operational behavior are not proven.
   was reconciled through remote Terraform state; the final plan reports no changes.
 - The single-host local PostgreSQL volume has no deployed backup/restore mechanism;
   host replacement can lose PAPER data until that operational gate is implemented.
+- A protected destroy workflow exists but has intentionally not been exercised. It
+  permanently removes host-local PostgreSQL, application S3 data, ECR images, logs,
+  IAM instance resources, and networking while preserving remote state and OIDC roles.
+- Official Polymarket documentation places primary CLOB servers in `eu-west-2`, with
+  direct lowest-latency co-location subject to KYC/KYB approval, and identifies
+  `eu-west-1` as the closest non-georestricted region. The current `us-east-1` PAPER
+  host has not been migrated; any region move needs measured evidence and a data plan.
 
 ## Recommended next gate
 
