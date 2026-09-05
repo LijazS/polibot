@@ -9,3 +9,6 @@ rolls the application image back on failure when a previous image exists.
 Database migrations are not automatically downgraded during image rollback. A release
 with a backward-incompatible migration requires a reviewed forward-recovery plan.
 
+`post-deploy-verification-commands.json` is a secret-safe SSM parameter document for
+independent checks of runtime health, mode flags, secret-file permissions, deployed
+SHA/digest, and container health. It prints no credential values.

@@ -25,7 +25,7 @@ Strategy effectiveness and long-running operational behavior are not proven.
 | Execution state machine | TESTED_OFFLINE | One-use approval, partial/second-leg/unknown/DB-failure paths, PostgreSQL transition journal |
 | Wallet / exchange / settlement boundaries | TESTED_OFFLINE | Protocols and deterministic fakes only; no real signer, authenticated transport, or broadcast |
 | Reconciliation / kill switches / recovery | TESTED_OFFLINE | State comparison, scoped blockers, rebuild/reconcile/unknown-state restart gate |
-| AWS PAPER deployment | BOOTSTRAPPED | State bucket, exact-subject OIDC roles and protected GitHub environment verified; no plan/apply/deploy yet |
+| AWS PAPER deployment | DEPLOYED_PAPER | Workflow run `33963697738`; instance `i-0a24009387e20f235`; SHA `a3545a2`; digest `sha256:ec3988...26cdd` |
 | Shadow market making | TESTED_OFFLINE | Decimal midpoint/microprice/imbalance, inventory skew and shutdowns; fills/P&L `PENDING_DATA` |
 
 ## Evidence gates
@@ -47,15 +47,18 @@ Strategy effectiveness and long-running operational behavior are not proven.
   questions are `PENDING_DATA`.
 - Exact NegRisk conversion encoding and ambiguous/augmented structure semantics remain
   unsupported pending sufficient official specification.
-- AWS/GitHub bootstrap is verified: encrypted/versioned/private state bucket, two
-  exact-subject OIDC roles, `paper` environment with `main` branch policy/reviewer,
-  seven non-secret variables, and zero environment secrets. Terraform plan/apply,
-  host bootstrap, monitoring, restore, and deployment remain unexecuted.
+- AWS/GitHub bootstrap and the first PAPER deployment are verified. Terraform reports
+  no drift; EC2 and SSM are online; the alarm is OK; app and PostgreSQL containers are
+  healthy; the app reports PAPER with live disabled; secret files are root-owned mode
+  `0600`; and the host runs the recorded commit by immutable ECR digest.
+- The first apply required least-privilege read-policy corrections. All partial state
+  was reconciled through remote Terraform state; the final plan reports no changes.
 - The single-host local PostgreSQL volume has no deployed backup/restore mechanism;
   host replacement can lose PAPER data until that operational gate is implemented.
 
 ## Recommended next gate
 
-Collect a predefined-duration public-data recording and paper/shadow dataset, then run
-the existing replay/report tooling. Do not consider any capped micro-live trial until
-reconciliation, restart, cancel/heartbeat, security, and empirical gates are reviewed.
+Run a predefined-duration PAPER recording on the deployed host, exercise host/database
+backup and restore, and review cost/log/uptime evidence. Do not consider any capped
+micro-live trial until reconciliation, restart, cancel/heartbeat, security, and
+empirical gates are reviewed.

@@ -1,0 +1,13 @@
+{
+  "commands": [
+    "set -eu",
+    "curl --fail --silent --show-error http://127.0.0.1:8000/health",
+    "grep -qx 'POLIBOT_EXECUTION_MODE=paper' /opt/polibot/secrets/runtime.env",
+    "grep -qx 'POLIBOT_LIVE_TRADING_ENABLED=false' /opt/polibot/secrets/runtime.env",
+    "printf 'mode_config=paper live_trading_enabled=false\\n'",
+    "stat -c 'secret_file=%n permissions=%a owner=%U:%G' /opt/polibot/secrets/postgres.env /opt/polibot/secrets/runtime.env",
+    "printf 'deployed_git_sha='; cat /opt/polibot/state/current-git-sha",
+    "printf 'deployed_image='; cat /opt/polibot/state/current-image",
+    "export POLIBOT_IMAGE=$(cat /opt/polibot/state/current-image); cd /opt/polibot && docker compose --file docker-compose.paper.yml ps --format json"
+  ]
+}

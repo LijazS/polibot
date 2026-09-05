@@ -17,8 +17,8 @@
   and transactional persistence of proposal, approval, transition, and exposure in
   one unit of work require service-backed design and tests before live consideration.
 - The AWS PAPER stack, OIDC workflow, immutable image pipeline, SSM deploy, alarm, and
-  rollback path are locally validated but have never been planned, applied, or exercised
-  in AWS. One-time state/role/environment bootstrap remains pending manual approval.
+  health verification are deployed. Rollback, host replacement, sustained operation,
+  budget alerting, and database backup/restore still need operator exercises.
 - No multi-day dataset exists. Rewards, opportunity frequency, fills, profitability,
   drawdown, reconciliation stability, and shadow-maker results are `PENDING_DATA`.
 ## AWS PAPER persistence

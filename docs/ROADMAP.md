@@ -31,12 +31,12 @@ and reconciliation; kill/cancel controls and runbooks are exercised; and tightly
 capped structural execution has controlled evidence. This gate does not promote
 market making.
 
-Non-live infrastructure state: `STATICALLY_VALIDATED` on 2026-09-05. The state machine,
+Non-live infrastructure state: `DEPLOYED_PAPER` on 2026-09-05. The state machine,
 fake-only boundaries, reconciliation, kill/recovery gates, dedicated AWS PAPER stack,
-OIDC workflow, and immutable SSM deployment path exist. One-time AWS/GitHub bootstrap
-is verified; every cloud plan/apply/deployment remains pending workflow execution.
-Docker was unavailable for local container validation, which remains a mandatory CI
-job. The guarded micro-live exit gate is not met and LIVE remains hard-disabled.
+OIDC workflow, and immutable SSM deployment path exist. AWS/GitHub bootstrap, Terraform
+apply, immutable image push, SSM deployment, container health, and PAPER/live-disable
+checks are verified. Sustained runtime, backup/restore, and empirical strategy evidence
+remain pending. The guarded micro-live exit gate is not met and LIVE remains hard-disabled.
 
 ## V2.x — market-making shadow research
 

@@ -20,3 +20,13 @@ After a successful run, inspect the workflow summary and CloudWatch log group
 `/polibot/paper/host`. Use SSM rather than SSH for diagnostics. Treat any mode mismatch,
 failed migration, unavailable SSM host, reconciliation fault, or unexplained restart as
 a failed deployment; do not weaken the checks.
+
+## First deployment evidence
+
+Workflow run `33963697738` deployed commit
+`a3545a2638481dc0a66f6b0f71f414fa81910122` to instance
+`i-0a24009387e20f235` as ECR digest
+`sha256:ec398861bf5264863af51dfd9e3a7266cc45ec261839dfec83f2af1ea7d26cdd`.
+Independent SSM verification confirmed both containers healthy, loopback-only app
+publishing, no PostgreSQL port, PAPER mode, live disabled, and root-owned `0600`
+runtime files. A post-deploy Terraform plan reported no changes.
