@@ -10,9 +10,9 @@ variable "aws_account_id" {
 }
 
 variable "aws_region" {
-  description = "AWS region discovered from the authenticated deployment profile."
+  description = "AWS region selected for the PAPER stack after server-location review."
   type        = string
-  default     = "us-east-1"
+  default     = "eu-west-2"
 }
 
 variable "environment" {

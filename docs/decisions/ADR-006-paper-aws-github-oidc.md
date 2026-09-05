@@ -9,7 +9,7 @@ Deploy only PAPER mode from a manually dispatched, protected GitHub Actions work
 Use GitHub OIDC with separate infrastructure and deployment IAM roles whose trust is
 bound to the repository's immutable owner/repository IDs and `paper` environment.
 
-Use Terraform for a dedicated `us-east-1` VPC, one SSM-only EC2 host, immutable ECR,
+Use Terraform for a dedicated `eu-west-2` VPC, one SSM-only EC2 host, immutable ECR,
 private S3 data/artifacts, CloudWatch, and scoped instance IAM. Run PostgreSQL locally
 on the EC2 root volume. Store Terraform state in a manually bootstrapped S3 bucket with
 encryption, versioning, public-access blocking, TLS enforcement, and native lockfiles.
@@ -22,6 +22,11 @@ Provide a separate manual, environment-protected, exact-confirmation destroy wor
 Serialize it with deployment and preserve the independently bootstrapped state bucket,
 state history, OIDC provider, and GitHub roles. Permit non-empty PAPER data-bucket and
 ECR deletion only through an explicit destroy-only Terraform variable.
+
+The stack was initially validated in `us-east-1`, destroyed on 2026-09-05, and moved
+to `eu-west-2` for public-data PAPER latency. The Terraform backend remains in its
+separately bootstrapped `us-east-1` bucket. The regional choice does not grant
+Polymarket co-location approval or authorize order submission.
 
 ## Consequences
 

@@ -25,8 +25,8 @@ Strategy effectiveness and long-running operational behavior are not proven.
 | Execution state machine | TESTED_OFFLINE | One-use approval, partial/second-leg/unknown/DB-failure paths, PostgreSQL transition journal |
 | Wallet / exchange / settlement boundaries | TESTED_OFFLINE | Protocols and deterministic fakes only; no real signer, authenticated transport, or broadcast |
 | Reconciliation / kill switches / recovery | TESTED_OFFLINE | State comparison, scoped blockers, rebuild/reconcile/unknown-state restart gate |
-| AWS PAPER deployment | DEPLOYED_PAPER | Workflow run `33963697738`; instance `i-0a24009387e20f235`; SHA `a3545a2`; digest `sha256:ec3988...26cdd` |
-| AWS PAPER destruction | IMPLEMENTED_NOT_EXERCISED | Manual main-only workflow; exact confirmation, protected plan/apply, OIDC, shared deployment lock, bootstrap preservation |
+| AWS PAPER deployment | MIGRATING_REGION | Original `us-east-1` stack destroyed by run `33964747292`; `eu-west-2` redeploy pending |
+| AWS PAPER destruction | EXERCISED | Run `33964747292`; exact confirmation, protected plan/apply, OIDC, shared deployment lock, empty final state |
 | Shadow market making | TESTED_OFFLINE | Decimal midpoint/microprice/imbalance, inventory skew and shutdowns; fills/P&L `PENDING_DATA` |
 
 ## Evidence gates
@@ -48,21 +48,20 @@ Strategy effectiveness and long-running operational behavior are not proven.
   questions are `PENDING_DATA`.
 - Exact NegRisk conversion encoding and ambiguous/augmented structure semantics remain
   unsupported pending sufficient official specification.
-- AWS/GitHub bootstrap and the first PAPER deployment are verified. Terraform reports
-  no drift; EC2 and SSM are online; the alarm is OK; app and PostgreSQL containers are
-  healthy; the app reports PAPER with live disabled; secret files are root-owned mode
-  `0600`; and the host runs the recorded commit by immutable ECR digest.
+- AWS/GitHub bootstrap and the first PAPER deployment were verified. The original
+  `us-east-1` stack was subsequently destroyed under workflow run `33964747292`; its
+  remote Terraform state is empty and the bootstrap state bucket/OIDC roles remain.
 - The first apply required least-privilege read-policy corrections. All partial state
   was reconciled through remote Terraform state; the final plan reports no changes.
 - The single-host local PostgreSQL volume has no deployed backup/restore mechanism;
   host replacement can lose PAPER data until that operational gate is implemented.
-- A protected destroy workflow exists but has intentionally not been exercised. It
-  permanently removes host-local PostgreSQL, application S3 data, ECR images, logs,
-  IAM instance resources, and networking while preserving remote state and OIDC roles.
+- The protected destroy workflow was exercised. It permanently removed host-local
+  PostgreSQL, application S3 data, ECR images, logs, IAM instance resources, and
+  networking while preserving the remote-state bucket and OIDC roles.
 - Official Polymarket documentation places primary CLOB servers in `eu-west-2`, with
   direct lowest-latency co-location subject to KYC/KYB approval, and identifies
-  `eu-west-1` as the closest non-georestricted region. The current `us-east-1` PAPER
-  host has not been migrated; any region move needs measured evidence and a data plan.
+  `eu-west-1` as the closest non-georestricted region. A replacement `eu-west-2` host
+  is pending deployment for PAPER/public-data use only.
 
 ## Recommended next gate
 

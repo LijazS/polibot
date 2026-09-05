@@ -4,7 +4,7 @@ Local development uses Docker Compose with the application and PostgreSQL. The a
 container runs as a non-root user and defaults to paper mode. CI validates only; it
 has no secrets or deployment privileges.
 
-The PAPER stack targets the explicitly discovered AWS account and `us-east-1`. It
+The PAPER stack targets the explicitly discovered AWS account and `eu-west-2`. It
 creates a dedicated low-cost VPC with one public subnet used only for outbound access,
 an EC2 host with no inbound rules or SSH key, an immutable ECR repository, a private
 encrypted/versioned S3 data and deployment-artifact bucket, SSM administration, and
@@ -26,7 +26,8 @@ provider, and GitHub roles remain outside the stack and survive teardown.
 
 ## Region assessment
 
-The deployed PAPER host remains in `us-east-1`. As of 2026-09-05, Polymarket's official
+The original `us-east-1` PAPER host was destroyed before selecting `eu-west-2`. As of
+2026-09-05, Polymarket's official
 [trading overview](https://docs.polymarket.com/trading/overview) identifies `eu-west-2`
 as the primary-server region and says approved KYC/KYB participants can obtain direct
 co-location there for the lowest possible latency. The same documentation identifies
@@ -35,12 +36,12 @@ co-location there for the lowest possible latency. The same documentation identi
 checked before any order path is considered.
 
 For public-data PAPER collection, a normal `eu-west-2` EC2 host is expected to reduce
-network distance relative to `us-east-1`, but it is not the documented direct
-co-location entitlement and exact latency must be measured. For any future eligible
-order submission, prefer `eu-west-1` unless Polymarket has explicitly approved
+network distance relative to the former `us-east-1` host, but it is not the documented
+direct co-location entitlement and exact latency must be measured. For any future
+eligible order submission, prefer `eu-west-1` unless Polymarket has explicitly approved
 `eu-west-2` co-location for the operator. Cloud placement must never be used to evade
-geographic restrictions. Region migration requires a separate reviewed plan because
-it replaces regional resources and can destroy the host-local database.
+geographic restrictions. This placement is approved only for PAPER/public-data work;
+it does not promote or enable an order-submission path.
 
 There is no NAT gateway, load balancer, RDS, Lambda core loop, EKS, SSH, static AWS
 key, publicly reachable app/database, or geographic-restriction workaround.

@@ -29,8 +29,11 @@ gh workflow run destroy-paper.yml --ref main -f confirmation=DESTROY-POLIBOT-PAP
 
 Review the destroy-plan log and approve the protected apply only after confirming the
 account, region, backend key, and complete list of deletions. The apply job creates a
-fresh saved destroy plan, prints it, applies that exact plan, and fails if Terraform
-state is not empty afterward.
+targeted saved plan that records `force_destroy=true` and `force_delete=true` for the
+application bucket and ECR repository in Terraform state. This is necessary because
+destroy planning alone retains their prior state values. It then creates a fresh saved
+destroy plan, prints it, applies that exact plan, and fails if Terraform state is not
+empty afterward.
 
 Do not run raw local `terraform destroy`: it bypasses the repository/environment
 checks and the documented audit trail. Do not remove the bootstrap state bucket or

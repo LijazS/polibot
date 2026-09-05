@@ -20,25 +20,25 @@
         "ecr:PutImage",
         "ecr:UploadLayerPart"
       ],
-      "Resource": "arn:aws:ecr:us-east-1:484632959006:repository/polibot-paper"
+      "Resource": "arn:aws:ecr:eu-west-2:484632959006:repository/polibot-paper"
     },
     {
       "Sid": "UploadDeploymentBundles",
       "Effect": "Allow",
       "Action": "s3:PutObject",
-      "Resource": "arn:aws:s3:::polibot-paper-data-484632959006-us-east-1/deployments/*"
+      "Resource": "arn:aws:s3:::polibot-paper-data-484632959006-eu-west-2/deployments/*"
     },
     {
       "Sid": "SendCommandUsingApprovedDocument",
       "Effect": "Allow",
       "Action": "ssm:SendCommand",
-      "Resource": "arn:aws:ssm:us-east-1::document/AWS-RunShellScript"
+      "Resource": "arn:aws:ssm:eu-west-2::document/AWS-RunShellScript"
     },
     {
       "Sid": "SendCommandOnlyToPolibotPaperHost",
       "Effect": "Allow",
       "Action": "ssm:SendCommand",
-      "Resource": "arn:aws:ec2:us-east-1:484632959006:instance/*",
+      "Resource": "arn:aws:ec2:eu-west-2:484632959006:instance/*",
       "Condition": {
         "StringEquals": {
           "ssm:resourceTag/Project": "polibot",
@@ -60,4 +60,3 @@
     }
   ]
 }
-

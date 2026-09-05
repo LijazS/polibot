@@ -66,7 +66,7 @@
       "Sid": "PublicAmiLookup",
       "Effect": "Allow",
       "Action": "ssm:GetParameter",
-      "Resource": "arn:aws:ssm:us-east-1::parameter/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+      "Resource": "arn:aws:ssm:eu-west-2::parameter/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
     },
     {
       "Sid": "ApplicationBucketManagement",
@@ -100,7 +100,7 @@
         "s3:PutBucketVersioning",
         "s3:PutEncryptionConfiguration"
       ],
-      "Resource": "arn:aws:s3:::polibot-paper-data-484632959006-us-east-1"
+      "Resource": "arn:aws:s3:::polibot-paper-data-484632959006-eu-west-2"
     },
     {
       "Sid": "ApplicationBucketDestructiveCleanup",
@@ -109,13 +109,13 @@
         "s3:DeleteObject",
         "s3:DeleteObjectVersion"
       ],
-      "Resource": "arn:aws:s3:::polibot-paper-data-484632959006-us-east-1/*"
+      "Resource": "arn:aws:s3:::polibot-paper-data-484632959006-eu-west-2/*"
     },
     {
       "Sid": "ApplicationBucketPolicyCleanup",
       "Effect": "Allow",
       "Action": "s3:DeleteBucketPolicy",
-      "Resource": "arn:aws:s3:::polibot-paper-data-484632959006-us-east-1"
+      "Resource": "arn:aws:s3:::polibot-paper-data-484632959006-eu-west-2"
     },
     {
       "Sid": "EcrRepositoryManagement",
@@ -132,7 +132,7 @@
         "ecr:PutLifecyclePolicy",
         "ecr:TagResource"
       ],
-      "Resource": "arn:aws:ecr:us-east-1:484632959006:repository/polibot-paper"
+      "Resource": "arn:aws:ecr:eu-west-2:484632959006:repository/polibot-paper"
     },
     {
       "Sid": "InstanceIamManagement",
@@ -201,8 +201,8 @@
         "logs:TagResource"
       ],
       "Resource": [
-        "arn:aws:cloudwatch:us-east-1:484632959006:alarm:polibot-paper-*",
-        "arn:aws:logs:us-east-1:484632959006:log-group:/polibot/paper/host*"
+        "arn:aws:cloudwatch:eu-west-2:484632959006:alarm:polibot-paper-*",
+        "arn:aws:logs:eu-west-2:484632959006:log-group:/polibot/paper/host*"
       ]
     },
     {
@@ -219,7 +219,7 @@
         "sns:TagResource",
         "sns:Unsubscribe"
       ],
-      "Resource": "arn:aws:sns:us-east-1:484632959006:polibot-paper-alarms"
+      "Resource": "arn:aws:sns:eu-west-2:484632959006:polibot-paper-alarms"
     }
   ]
 }

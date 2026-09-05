@@ -1,7 +1,7 @@
 # Terraform environments
 
 `environments/paper` is the only deployable stack. It targets AWS account
-`484632959006` in `us-east-1`, fails on a different account, and permits only the
+`484632959006` in `eu-west-2`, fails on a different account, and permits only the
 `paper` environment value.
 
 The deployed stack creates a dedicated VPC, one public subnet for outbound

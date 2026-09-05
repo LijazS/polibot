@@ -42,3 +42,12 @@ preserve the separately bootstrapped Terraform state bucket and GitHub OIDC role
 - Actionlint v1.7.12 and YAML parsing passed for all workflows.
 - Ruff, formatting, mypy, 96 pytest tests, compileall, Alembic offline SQL, JSON parsing,
   documentation links, and `git diff --check` passed.
+
+## Post-completion exercise
+
+The first real teardown on 2026-09-05 found that a destroy-only variable value was not
+recorded into the prior S3/ECR resource state. Terraform removed 20 resources but left
+the non-empty bucket and repository. After explicitly removing the single inventoried
+deployment bundle and image, the rerun removed the remaining resources and left empty
+remote state. The eu-west-2 migration plan corrects future runs by applying a targeted
+saved plan that records both deletion flags before creating the saved destroy plan.

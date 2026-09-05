@@ -53,7 +53,7 @@ jobs:
           printf 'POLIBOT_EXECUTION_MODE=paper\nPOLIBOT_LIVE_TRADING_ENABLED=false\nPOLIBOT_DATABASE_URL=postgresql+asyncpg://polibot:not-a-secret@postgres:5432/polibot\n' \
             > /tmp/polibot-validation-secrets/runtime.env
           export POLIBOT_SECRETS_DIR=/tmp/polibot-validation-secrets
-          POLIBOT_IMAGE="484632959006.dkr.ecr.us-east-1.amazonaws.com/polibot-paper@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
+          POLIBOT_IMAGE="484632959006.dkr.ecr.eu-west-2.amazonaws.com/polibot-paper@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
             docker compose --file deploy/docker-compose.paper.yml config --quiet
           docker build --tag polibot-validation:"${GITHUB_SHA}" .
           terraform -chdir="${TF_DIR}" fmt -check -recursive
@@ -92,10 +92,14 @@ jobs:
           [[ "${AWS_REGION}" == "${AWS_REGION_EXPECTED}" ]] || exit 1
           printf 'Account=%s\nRegion=%s\nEnvironment=paper\nBackend=%s/%s\n' \
             "${actual_account}" "${AWS_REGION}" "${TF_STATE_BUCKET}" "${TF_STATE_KEY}"
-          terraform -chdir="${TF_DIR}" init -reconfigure -input=false \
-            -backend-config="bucket=${TF_STATE_BUCKET}" \
-            -backend-config="key=${TF_STATE_KEY}" \
-            -backend-config="region=${TF_STATE_REGION}"
+          for attempt in 1 2 3; do
+            terraform -chdir="${TF_DIR}" init -reconfigure -input=false \
+              -backend-config="bucket=${TF_STATE_BUCKET}" \
+              -backend-config="key=${TF_STATE_KEY}" \
+              -backend-config="region=${TF_STATE_REGION}" && break
+            [[ "${attempt}" -eq 3 ]] && exit 1
+            sleep $((attempt * 5))
+          done
           terraform -chdir="${TF_DIR}" validate
           terraform -chdir="${TF_DIR}" plan -input=false -no-color
 
@@ -130,10 +134,14 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$(aws sts get-caller-identity --query Account --output text)" == "${EXPECTED_ACCOUNT}" ]] || exit 1
-          terraform -chdir="${TF_DIR}" init -reconfigure -input=false \
-            -backend-config="bucket=${TF_STATE_BUCKET}" \
-            -backend-config="key=${TF_STATE_KEY}" \
-            -backend-config="region=${TF_STATE_REGION}"
+          for attempt in 1 2 3; do
+            terraform -chdir="${TF_DIR}" init -reconfigure -input=false \
+              -backend-config="bucket=${TF_STATE_BUCKET}" \
+              -backend-config="key=${TF_STATE_KEY}" \
+              -backend-config="region=${TF_STATE_REGION}" && break
+            [[ "${attempt}" -eq 3 ]] && exit 1
+            sleep $((attempt * 5))
+          done
           terraform -chdir="${TF_DIR}" plan -input=false -out=tfplan
           terraform -chdir="${TF_DIR}" apply -input=false tfplan
       - name: Capture non-sensitive Terraform outputs

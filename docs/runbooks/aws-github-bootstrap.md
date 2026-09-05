@@ -2,7 +2,8 @@
 
 Status: completed and verified 2026-09-05  
 Repository: `LijazS/polibot`  
-AWS account/region: `484632959006` / `us-east-1`
+AWS account/stack region: `484632959006` / `eu-west-2`
+Terraform backend region: `us-east-1`
 
 This procedure creates only the prerequisites that cannot be created by the main
 Terraform state: the state bucket, two GitHub OIDC roles, and the protected GitHub
@@ -128,7 +129,7 @@ Add these environment-level Actions variables (not secrets):
 | Variable | Exact value |
 | --- | --- |
 | `AWS_ACCOUNT_ID` | `484632959006` |
-| `AWS_REGION` | `us-east-1` |
+| `AWS_REGION` | `eu-west-2` |
 | `TF_STATE_BUCKET` | `polibot-tfstate-484632959006-us-east-1` |
 | `TF_STATE_KEY` | `polibot/paper/terraform.tfstate` |
 | `TF_STATE_REGION` | `us-east-1` |
@@ -139,7 +140,7 @@ GitHub CLI equivalents:
 
 ```powershell
 gh variable set AWS_ACCOUNT_ID --env paper --body 484632959006
-gh variable set AWS_REGION --env paper --body us-east-1
+gh variable set AWS_REGION --env paper --body eu-west-2
 gh variable set TF_STATE_BUCKET --env paper --body polibot-tfstate-484632959006-us-east-1
 gh variable set TF_STATE_KEY --env paper --body polibot/paper/terraform.tfstate
 gh variable set TF_STATE_REGION --env paper --body us-east-1
