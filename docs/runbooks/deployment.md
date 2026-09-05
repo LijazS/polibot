@@ -14,10 +14,17 @@ commit, pushes an immutable ECR tag, resolves its digest, uploads a SHA-specific
 and deploys through SSM. Concurrent deployments are serialized.
 
 On-host deployment creates a random PostgreSQL password only if root-only runtime files
-do not exist, pulls by digest, starts PostgreSQL, applies forward migrations, starts the
-app, and verifies `/health` reports `paper` and `live_trading_enabled=false`. A failed
-health check attempts application-image rollback. It never deploys a signer, private
-Polymarket key, or authenticated trading transport.
+do not exist, pulls by digest, starts PostgreSQL, applies forward migrations, then starts
+separate API and worker containers from the same image. Verification requires `/health`
+to report `paper`, LIVE false, and a current worker heartbeat; `/ready` must prove public
+connectivity, selected markets, current books, and healthy recording. A failed check
+attempts API/worker image rollback. It never deploys a signer, private Polymarket key,
+authenticated trading transport, or public worker port.
+
+After deployment, compare two `/status` samples at least 30 seconds apart. Message and
+strategy-evaluation counters must increase; recorder drops and database errors should
+remain zero, and database/disk size must be visible. A short check proves startup only,
+not sustained reliability or profitability.
 
 After a successful run, inspect the workflow summary and CloudWatch log group
 `/polibot/paper/host`. Use SSM rather than SSH for diagnostics. Treat any mode mismatch,

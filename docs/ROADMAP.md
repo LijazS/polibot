@@ -13,7 +13,9 @@ pass; and paper accounting reconciles without unexplained differences.
 
 Engineering state: `TESTED_OFFLINE` on 2026-09-05. Public connectivity, PostgreSQL
 service integration, sustained operation, and strategy effectiveness remain evidence
-gates; V1 feature completion does not imply profitability.
+gates. A separate continuous worker with heartbeat/readiness, bounded recording, public
+book recovery, binary risk evaluation, and paper depth simulation is tested offline and
+awaits deployment evidence; feature completion does not imply profitability.
 
 ## V1.1 — sustained shadow validation
 

@@ -12,3 +12,8 @@ drawdown, reconciliation mismatches, and separated P&L components. Readiness mus
 fail when a dependency required for safe operation is unhealthy; liveness must not
 conceal a failed trading path.
 
+`/health` proves a current database-backed heartbeat and safe mode; `/ready` additionally
+requires public connectivity, strategy-readable books, and healthy recording. `/status`
+exposes discovery, subscription, message, book, strategy, risk, paper, queue, database,
+and disk counters. Worker container health requires a current durable heartbeat, so a
+live container cannot masquerade as a functioning worker.

@@ -4,9 +4,10 @@ Last updated: 2026-09-05
 
 ## Current milestone
 
-V1 software and the non-live V2 safety scaffold are `TESTED_OFFLINE`. Replay,
-paper, and shadow paths are available. LIVE remains deliberately hard-disabled.
-Strategy effectiveness and long-running operational behavior are not proven.
+V1 software, the continuous PAPER worker, and the non-live V2 safety scaffold are
+`TESTED_OFFLINE`. Replay, paper, and shadow paths are available. LIVE remains
+deliberately hard-disabled. Worker deployment, strategy effectiveness, and long-running
+operational behavior are not yet proven.
 
 ## Component status
 
@@ -14,13 +15,14 @@ Strategy effectiveness and long-running operational behavior are not proven.
 | --- | --- | --- |
 | Market discovery and normalization | TESTED_OFFLINE | Strict Gamma/CLOB DTOs, token cross-check, quarantine tests; local public call timed out |
 | L2 order book | TESTED_OFFLINE | Snapshot/delta/trade/tick parsing, staleness, invalidation, recovery, bounded reconnect tests |
-| Recorder / Parquet / replay | TESTED_OFFLINE | Canonical append-only envelopes, Parquet round trip, stable replay ordering and CLI |
-| PostgreSQL / migrations | IMPLEMENTED | Async recorder, constrained schema, Alembic offline SQL; no PostgreSQL service test |
+| Recorder / Parquet / replay | TESTED_OFFLINE | Bounded batch recording/backpressure, canonical envelopes, Parquet round trip, stable replay ordering and CLI |
+| PostgreSQL / migrations | IMPLEMENTED | Worker run/heartbeat/selection schema and batch recorder; Alembic offline SQL, no local service test |
 | Binary complete-set arbitrage | TESTED_OFFLINE | Depth-aware Decimal scanner, dynamic fee provenance, payoff proof and property tests |
 | Vanilla NegRisk | TESTED_OFFLINE | Explicit terminal states, unsupported ambiguity handling, deterministic Decimal solver |
 | Holding Rewards pilot | IMPLEMENTED | Dated observation/reconciliation and separated attribution; actual rewards `PENDING_DATA` |
 | Deterministic risk engine | TESTED_OFFLINE | Scoped exposure, staleness, fee/depth/proof, drawdown/error, health/reconciliation gates |
-| Paper / shadow runtime | TESTED_OFFLINE | Proposal-risk-simulation-recording integration; no sustained public-data run |
+| Continuous PAPER worker | TESTED_OFFLINE | Separate process, bounded discovery, REST recovery, WebSocket reconnect, durable heartbeat/readiness, binary risk/paper pipeline; deployment pending |
+| Paper / shadow runtime | TESTED_OFFLINE | Proposal-risk-depth simulation-recording integration; no sustained public-data run |
 | Accounting / metrics / reports | TESTED_OFFLINE | Separated P&L components, Prometheus output, strategy feasibility summaries |
 | Execution state machine | TESTED_OFFLINE | One-use approval, partial/second-leg/unknown/DB-failure paths, PostgreSQL transition journal |
 | Wallet / exchange / settlement boundaries | TESTED_OFFLINE | Protocols and deterministic fakes only; no real signer, authenticated transport, or broadcast |
@@ -43,6 +45,8 @@ Strategy effectiveness and long-running operational behavior are not proven.
 
 - Direct public API runtime validation is blocked by connect timeouts in this environment.
 - PostgreSQL, Docker Compose, and sustained WebSocket/runtime behavior need service testing.
+- This workstation has no Docker executable and its local AWS token is expired. The
+  authorized GitHub OIDC deployment/CI path must perform container and cloud checks.
 - Binary/NegRisk opportunity rates, fill quality, latency sensitivity, reward accrual,
   reconciliation stability, market-making queue/adverse selection, and all profitability
   questions are `PENDING_DATA`.
@@ -73,7 +77,7 @@ Strategy effectiveness and long-running operational behavior are not proven.
 
 ## Recommended next gate
 
-Run a predefined-duration PAPER recording on the deployed host, exercise host/database
-backup and restore, and review cost/log/uptime evidence. Do not consider any capped
-micro-live trial until reconciliation, restart, cancel/heartbeat, security, and
-empirical gates are reviewed.
+Deploy the continuous worker through GitHub OIDC, require increasing market-message,
+strategy-cycle, and database counters, then run a predefined-duration PAPER recording.
+Exercise host/database backup and restore and review cost/log/uptime evidence. Do not
+consider any capped micro-live trial until every empirical and safety gate is reviewed.

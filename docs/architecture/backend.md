@@ -9,6 +9,13 @@ Near-term orchestration should connect discovery, sequence-aware books, recorder
 strategies, risk, simulated execution, and audit with injected ports and an explicit
 clock. Background tasks must propagate cancellation and health failures fail closed.
 
+The continuous PAPER worker is separate from FastAPI. It performs bounded discovery,
+authoritative REST initialization, public WebSocket ingestion, book maintenance,
+binary proposal generation, deterministic risk, depth-based paper simulation, and
+durable heartbeats. Disconnect, staleness, metadata disagreement, unknown fees, or
+recorder degradation removes readiness. NegRisk is not continuously enabled until
+complete event structure is proven from machine-readable metadata.
+
 Discovery uses strict external DTOs and parses JSON numbers as `Decimal`. Gamma
 outcome/token arrays are not trusted to assign token identity: normalization requires
 the documented CLOB market-by-token response identifying primary Yes and secondary

@@ -23,6 +23,9 @@ services:
     restart: unless-stopped
     env_file:
       - ${POLIBOT_SECRETS_DIR:-/opt/polibot/secrets}/runtime.env
+    environment:
+      POLIBOT_GIT_SHA: ${POLIBOT_GIT_SHA:?POLIBOT_GIT_SHA is required}
+    command: ["uvicorn", "polibot.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -48,6 +51,34 @@ services:
       timeout: 5s
       retries: 12
       start_period: 10s
+    networks:
+      - database
+      - outbound
+
+  worker:
+    image: ${POLIBOT_IMAGE:?POLIBOT_IMAGE must be an immutable ECR digest URI}
+    restart: unless-stopped
+    env_file:
+      - ${POLIBOT_SECRETS_DIR:-/opt/polibot/secrets}/runtime.env
+    environment:
+      POLIBOT_GIT_SHA: ${POLIBOT_GIT_SHA:?POLIBOT_GIT_SHA is required}
+    command: ["python", "-m", "polibot.worker"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-m", "polibot.worker_health"]
+      interval: 15s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
     networks:
       - database
       - outbound

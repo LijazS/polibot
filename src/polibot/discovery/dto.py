@@ -28,6 +28,9 @@ class GammaMarketDTO(ExternalModel):
     maker_base_fee: object = Field(default=None, alias="makerBaseFee")
     taker_base_fee: object = Field(default=None, alias="takerBaseFee")
     fees_enabled: bool | None = Field(default=None, alias="feesEnabled")
+    volume_24hr: object = Field(default=None, alias="volume24hr")
+    liquidity_num: object = Field(default=None, alias="liquidityNum")
+    neg_risk_other: bool = Field(default=False, alias="negRiskOther")
     start_date: str | None = Field(default=None, alias="startDate")
     end_date: str | None = Field(default=None, alias="endDate")
     events: tuple[GammaEventRefDTO, ...] = ()
@@ -60,3 +63,23 @@ class FeeObservationDTO(ExternalModel):
     fees_enabled: bool
     maker_base_fee: Decimal | None = None
     taker_base_fee: Decimal | None = None
+
+
+class FeeDetailsDTO(ExternalModel):
+    rate: Decimal = Field(alias="r")
+    exponent: int = Field(alias="e")
+    taker_only: bool = Field(alias="to")
+
+
+class ClobTokenDTO(ExternalModel):
+    token_id: str = Field(alias="t")
+    outcome: str = Field(alias="o")
+
+
+class ClobMarketInfoDTO(ExternalModel):
+    tokens: tuple[ClobTokenDTO, ...] = Field(alias="t")
+    minimum_order_size: Decimal = Field(alias="mos")
+    minimum_tick_size: Decimal = Field(alias="mts")
+    maker_base_fee_bps: int = Field(alias="mbf")
+    taker_base_fee_bps: int = Field(alias="tbf")
+    fee_details: FeeDetailsDTO | None = Field(default=None, alias="fd")

@@ -11,6 +11,18 @@ services:
       postgres:
         condition: service_healthy
 
+  worker:
+    build: .
+    command: ["python", "-m", "polibot.worker"]
+    environment:
+      POLIBOT_EXECUTION_MODE: paper
+      POLIBOT_LIVE_TRADING_ENABLED: "false"
+      POLIBOT_DATABASE_URL: postgresql+asyncpg://polibot:polibot@postgres:5432/polibot
+      POLIBOT_GIT_SHA: local
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   postgres:
     image: postgres:16-alpine
     environment:
@@ -27,4 +39,3 @@ services:
 
 volumes:
   polibot-postgres:
-

@@ -8,15 +8,27 @@ from polibot.storage.records import (
     RecordKind,
     canonical_payload,
 )
+from polibot.storage.worker import (
+    BatchedPostgresRecorder,
+    MarketSelection,
+    RecorderBackpressure,
+    WorkerStateStore,
+    WorkerStatus,
+)
 
 __all__ = [
     "Base",
+    "BatchedPostgresRecorder",
     "InMemoryRecorder",
+    "MarketSelection",
     "ParquetArchive",
     "PostgresRecorder",
     "RecordKind",
     "RecordedEnvelope",
     "Recorder",
+    "RecorderBackpressure",
+    "WorkerStateStore",
+    "WorkerStatus",
     "build_engine",
     "canonical_payload",
 ]

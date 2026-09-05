@@ -12,7 +12,7 @@ from polibot.market_data.client import (
     ReconnectPolicy,
     WebSocketConnection,
 )
-from polibot.market_data.messages import BookMessage
+from polibot.market_data.messages import BestBidAskMessage, BookMessage, parse_market_messages
 
 BOOK = (
     '{"event_type":"book","asset_id":"token-yes","market":"condition",'
@@ -119,3 +119,14 @@ def test_reconnect_delay_is_bounded() -> None:
     policy = ReconnectPolicy(maximum_reconnects=3, initial_delay_seconds=1, maximum_delay_seconds=2)
     assert policy.delay(1, 0.25) == 1.25
     assert policy.delay(3, 100) == 2
+
+
+def test_parser_supports_batched_messages_and_best_bid_ask() -> None:
+    raw = (
+        '[{"event_type":"best_bid_ask","asset_id":"token-yes",'
+        '"market":"condition","best_bid":"0.4","best_ask":"0.5",'
+        '"spread":"0.1","timestamp":"1"},' + BOOK + "]"
+    )
+    messages = parse_market_messages(raw)
+    assert isinstance(messages[0], BestBidAskMessage)
+    assert isinstance(messages[1], BookMessage)

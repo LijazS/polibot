@@ -31,7 +31,14 @@ class DiscoveryService:
     async def discover_market_page(
         self, *, observed_at: datetime, limit: int = 100, offset: int = 0
     ) -> DiscoveryBatch:
-        dtos = await self._client.list_markets(limit=limit, offset=offset)
+        dtos = await self._client.list_markets(
+            limit=limit,
+            offset=offset,
+            active=True,
+            closed=False,
+            order="volume24hr",
+            ascending=False,
+        )
         markets: list[Market] = []
         failures: list[DiscoveryFailure] = []
         for dto in dtos:

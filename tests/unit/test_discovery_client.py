@@ -1,4 +1,5 @@
 from collections.abc import Awaitable
+from decimal import Decimal
 
 import httpx
 import pytest
@@ -60,3 +61,31 @@ async def test_client_does_not_retry_permanent_rejection() -> None:
         with pytest.raises(PublicDiscoveryError, match="HTTP 400"):
             await client.list_markets(limit=1)
     assert calls == 1
+
+
+@pytest.mark.asyncio
+async def test_client_reads_dynamic_clob_market_parameters() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.method == "GET"
+        assert request.url.path == "/clob-markets/condition"
+        return httpx.Response(
+            200,
+            json={
+                "t": [
+                    {"t": "token-yes", "o": "Yes"},
+                    {"t": "token-no", "o": "No"},
+                ],
+                "mos": 5,
+                "mts": 0.01,
+                "mbf": 0,
+                "tbf": 0,
+                "fd": {"r": 0.04, "e": 2, "to": True},
+            },
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+        info = await GammaDiscoveryClient(http_client).clob_market_info("condition")
+    assert info.minimum_order_size == 5
+    assert info.minimum_tick_size == Decimal("0.01")
+    assert info.fee_details is not None
+    assert info.fee_details.rate == Decimal("0.04")

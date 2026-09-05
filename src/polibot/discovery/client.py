@@ -8,7 +8,7 @@ from decimal import Decimal
 import httpx
 from pydantic import TypeAdapter
 
-from polibot.discovery.dto import GammaEventDTO, GammaMarketDTO, TokenPairDTO
+from polibot.discovery.dto import ClobMarketInfoDTO, GammaEventDTO, GammaMarketDTO, TokenPairDTO
 
 
 class PublicDiscoveryError(RuntimeError):
@@ -46,13 +46,30 @@ class GammaDiscoveryClient:
         await self._client.aclose()
 
     async def list_markets(
-        self, *, limit: int = 100, offset: int = 0
+        self,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+        active: bool | None = None,
+        closed: bool | None = None,
+        order: str | None = None,
+        ascending: bool | None = None,
     ) -> tuple[GammaMarketDTO, ...]:
         if not 1 <= limit <= 500 or offset < 0:
             raise ValueError("limit must be 1..500 and offset must be non-negative")
-        data = await self._get_json(
-            f"{self._gamma_base_url}/markets", params={"limit": limit, "offset": offset}
-        )
+        params: dict[str, str | int | float | bool | None] = {
+            "limit": limit,
+            "offset": offset,
+        }
+        for key, value in {
+            "active": active,
+            "closed": closed,
+            "order": order,
+            "ascending": ascending,
+        }.items():
+            if value is not None:
+                params[key] = value
+        data = await self._get_json(f"{self._gamma_base_url}/markets", params=params)
         return tuple(TypeAdapter(list[GammaMarketDTO]).validate_python(data))
 
     async def list_events(self, *, limit: int = 100, offset: int = 0) -> tuple[GammaEventDTO, ...]:
@@ -69,7 +86,17 @@ class GammaDiscoveryClient:
         data = await self._get_json(f"{self._clob_base_url}/markets-by-token/{token_id}")
         return TokenPairDTO.model_validate(data)
 
-    async def _get_json(self, url: str, params: dict[str, int] | None = None) -> object:
+    async def clob_market_info(self, condition_id: str) -> ClobMarketInfoDTO:
+        if not condition_id:
+            raise ValueError("condition_id is required")
+        data = await self._get_json(f"{self._clob_base_url}/clob-markets/{condition_id}")
+        return ClobMarketInfoDTO.model_validate(data)
+
+    async def _get_json(
+        self,
+        url: str,
+        params: dict[str, str | int | float | bool | None] | None = None,
+    ) -> object:
         last_error: Exception | None = None
         for attempt in range(self._attempts):
             try:

@@ -64,8 +64,18 @@ class TickSizeChangeMessage(MarketMessage):
     timestamp: str
 
 
+class BestBidAskMessage(MarketMessage):
+    event_type: Literal["best_bid_ask"]
+    asset_id: str
+    market: str
+    best_bid: str
+    best_ask: str
+    spread: str
+    timestamp: str
+
+
 NormalizedMarketMessage = Annotated[
-    BookMessage | PriceChangeMessage | LastTradeMessage | TickSizeChangeMessage,
+    BookMessage | PriceChangeMessage | LastTradeMessage | TickSizeChangeMessage | BestBidAskMessage,
     Field(discriminator="event_type"),
 ]
 _MESSAGE_ADAPTER: TypeAdapter[NormalizedMarketMessage] = TypeAdapter(NormalizedMarketMessage)
@@ -74,3 +84,9 @@ _MESSAGE_ADAPTER: TypeAdapter[NormalizedMarketMessage] = TypeAdapter(NormalizedM
 def parse_market_message(raw: str) -> NormalizedMarketMessage:
     payload = json.loads(raw, parse_float=Decimal)
     return _MESSAGE_ADAPTER.validate_python(payload)
+
+
+def parse_market_messages(raw: str) -> tuple[NormalizedMarketMessage, ...]:
+    payload = json.loads(raw, parse_float=Decimal)
+    items = payload if isinstance(payload, list) else [payload]
+    return tuple(_MESSAGE_ADAPTER.validate_python(item) for item in items)

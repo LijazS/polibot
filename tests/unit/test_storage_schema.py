@@ -13,6 +13,9 @@ def test_expected_durable_tables_are_registered() -> None:
         "pnl_components",
         "reward_observations",
         "reconciliations",
+        "worker_runs",
+        "worker_heartbeats",
+        "market_selections",
     }
 
 
@@ -21,6 +24,8 @@ def test_financial_columns_have_explicit_decimal_precision() -> None:
         Base.metadata.tables["proposals"].c.all_in_cost,
         Base.metadata.tables["proposals"].c.expected_net_edge,
         Base.metadata.tables["pnl_components"].c.amount,
+        Base.metadata.tables["worker_heartbeats"].c.paper_current_capital,
+        Base.metadata.tables["worker_heartbeats"].c.paper_net_pnl,
     ]
     for column in columns:
         assert isinstance(column.type, Numeric)

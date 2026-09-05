@@ -10,7 +10,7 @@ from typing import Protocol, cast
 import httpx
 from websockets.asyncio.client import connect
 
-from polibot.market_data.messages import BookMessage, NormalizedMarketMessage, parse_market_message
+from polibot.market_data.messages import BookMessage, NormalizedMarketMessage, parse_market_messages
 
 
 class MarketDataConnectionError(RuntimeError):
@@ -63,6 +63,8 @@ class MarketChannelClient:
         policy: ReconnectPolicy | None = None,
         sleeper: Callable[[float], Awaitable[None]] = asyncio.sleep,
         jitter: Callable[[], float] = lambda: 0.0,
+        connection_changed: Callable[[bool], None] = lambda _: None,
+        reconnecting: Callable[[], None] = lambda: None,
     ) -> None:
         self._connector = connector
         self._url = url
@@ -71,6 +73,8 @@ class MarketChannelClient:
         self._policy = policy or ReconnectPolicy()
         self._sleeper = sleeper
         self._jitter = jitter
+        self._connection_changed = connection_changed
+        self._reconnecting = reconnecting
 
     async def stream(self, asset_ids: Sequence[str]) -> AsyncIterator[NormalizedMarketMessage]:
         if not asset_ids or any(not asset_id for asset_id in asset_ids):
@@ -80,6 +84,7 @@ class MarketChannelClient:
             connection: WebSocketConnection | None = None
             try:
                 connection = await self._connector(self._url, self._connect_timeout)
+                self._connection_changed(True)
                 subscription = json.dumps({"assets_ids": list(asset_ids), "type": "market"})
                 await connection.send(subscription)
                 while True:
@@ -92,19 +97,25 @@ class MarketChannelClient:
                         continue
                     if raw == "PONG":
                         continue
-                    yield parse_market_message(raw)
+                    messages = parse_market_messages(raw)
+                    failures = 0
+                    for message in messages:
+                        yield message
             except asyncio.CancelledError:
                 raise
             except (OSError, TimeoutError, ValueError) as exc:
                 failures += 1
+                self._connection_changed(False)
                 if failures > self._policy.maximum_reconnects:
                     raise MarketDataConnectionError(
                         "market channel exhausted bounded reconnect policy"
                     ) from exc
+                self._reconnecting()
                 await self._sleeper(self._policy.delay(failures, self._jitter()))
             finally:
                 if connection is not None:
                     await connection.close()
+                    self._connection_changed(False)
 
 
 class ClobSnapshotClient:

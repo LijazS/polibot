@@ -11,6 +11,26 @@ class PolibotMetrics:
             "Normalized market messages",
             registry=self.registry,
         )
+        self.markets_discovered = Gauge(
+            "polibot_markets_discovered",
+            "Markets inspected during the latest discovery refresh",
+            registry=self.registry,
+        )
+        self.markets_selected = Gauge(
+            "polibot_markets_selected",
+            "Markets selected during the latest discovery refresh",
+            registry=self.registry,
+        )
+        self.markets_rejected = Gauge(
+            "polibot_markets_rejected",
+            "Markets rejected during the latest discovery refresh",
+            registry=self.registry,
+        )
+        self.websocket_connected = Gauge(
+            "polibot_websocket_connected",
+            "Whether the public market WebSocket is connected",
+            registry=self.registry,
+        )
         self.active_subscriptions = Gauge(
             "polibot_active_subscriptions",
             "Current public market-data subscriptions",
@@ -84,6 +104,46 @@ class PolibotMetrics:
         self.stale_books = Gauge(
             "polibot_stale_books",
             "Books currently stale or invalid",
+            registry=self.registry,
+        )
+        self.active_books = Gauge(
+            "polibot_books_active",
+            "Normalized books currently maintained",
+            registry=self.registry,
+        )
+        self.healthy_books = Gauge(
+            "polibot_books_healthy",
+            "Normalized books currently strategy-readable",
+            registry=self.registry,
+        )
+        self.recorder_queue_depth = Gauge(
+            "polibot_recorder_queue_depth",
+            "Records waiting for a PostgreSQL batch",
+            registry=self.registry,
+        )
+        self.recorder_batches = Gauge(
+            "polibot_database_batch_write_total",
+            "Successful PostgreSQL batches in this worker process",
+            registry=self.registry,
+        )
+        self.recorder_drops = Gauge(
+            "polibot_recorder_dropped_events_total",
+            "Records rejected because the bounded queue was full",
+            registry=self.registry,
+        )
+        self.database_errors = Gauge(
+            "polibot_database_errors_total",
+            "Database errors observed by the worker",
+            registry=self.registry,
+        )
+        self.disk_used_percent = Gauge(
+            "polibot_disk_used_percent",
+            "Container-visible filesystem utilization percentage",
+            registry=self.registry,
+        )
+        self.database_size_bytes = Gauge(
+            "polibot_database_size_bytes",
+            "Current PostgreSQL database size",
             registry=self.registry,
         )
         self.reconciliation_mismatches = Gauge(

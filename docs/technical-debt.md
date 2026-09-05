@@ -2,9 +2,10 @@
 
 - PostgreSQL mappings, migrations, recorder, and execution-transition journal exist
   but have not run against a PostgreSQL service in this environment.
-- The continuous runtime orchestrates one proposal path; production-grade subscription
-  scheduling, backpressure, durable consumer offsets, and database/stream health probes
-  need a sustained public-data test.
+- The continuous worker now has bounded discovery, snapshot recovery, reconnect,
+  backpressure, durable heartbeat, and database/stream probes. Market refresh reconnects
+  the public subscription instead of applying dynamic deltas in place; sustained
+  public-data behavior still needs evidence.
 - Public Gamma/CLOB smoke validation timed out locally. All network integration is
   official-schema fixture/mock tested, not `TESTED_AGAINST_PUBLIC_API`.
 - Paper fills model taker depth, injected failures, and partial fills, but execution
@@ -28,6 +29,10 @@
   placement as direct co-location approval or a geoblock workaround.
 - No multi-day dataset exists. Rewards, opportunity frequency, fills, profitability,
   drawdown, reconciliation stability, and shadow-maker results are `PENDING_DATA`.
+- Parquet round-trip support exists, but incremental archive manifests, S3 checksum
+  verification, and post-verification PostgreSQL retention deletion are not automated.
+  The worker degrades at 85% visible disk use; operators must stop it before exhaustion
+  until archival is exercised.
 ## AWS PAPER persistence
 
 The low-cost PAPER design keeps PostgreSQL on the EC2 root volume. Terraform host

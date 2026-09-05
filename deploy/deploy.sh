@@ -32,6 +32,7 @@ install -d -m 0750 "${root_dir}" "${root_dir}/bin" "${state_dir}"
 install -d -m 0700 "${secrets_dir}"
 install -m 0640 "${script_dir}/docker-compose.paper.yml" "${compose_file}"
 install -m 0750 "${script_dir}/healthcheck.sh" "${root_dir}/bin/healthcheck.sh"
+install -m 0750 "${script_dir}/verify-worker.sh" "${root_dir}/bin/verify-worker.sh"
 install -m 0750 "${script_dir}/rollback.sh" "${root_dir}/bin/rollback.sh"
 install -m 0750 "${script_dir}/deploy.sh" "${root_dir}/bin/deploy.sh"
 
@@ -61,12 +62,16 @@ fi
 
 if [[ -s "${state_dir}/current-image" ]]; then
   install -m 0600 "${state_dir}/current-image" "${state_dir}/previous-image"
+  if [[ -s "${state_dir}/current-git-sha" ]]; then
+    install -m 0600 "${state_dir}/current-git-sha" "${state_dir}/previous-git-sha"
+  fi
 fi
 
 registry="${new_image%%/*}"
 aws ecr get-login-password --region "${aws_region}" |
   docker login --username AWS --password-stdin "${registry}" >/dev/null
 export POLIBOT_IMAGE="${new_image}"
+export POLIBOT_GIT_SHA="${git_sha}"
 
 docker compose --file "${compose_file}" pull
 docker compose --file "${compose_file}" up --detach postgres
@@ -84,10 +89,10 @@ if [[ "$(docker inspect --format '{{.State.Health.Status}}' "${postgres_id}")" !
 fi
 
 docker compose --file "${compose_file}" run --rm --no-deps app alembic upgrade head
-docker compose --file "${compose_file}" up --detach --no-deps app
+docker compose --file "${compose_file}" up --detach --no-deps worker app
 
 deployment_ok=false
-for _ in $(seq 1 30); do
+for _ in $(seq 1 90); do
   if "${root_dir}/bin/healthcheck.sh"; then
     deployment_ok=true
     break
@@ -103,9 +108,16 @@ if [[ "${deployment_ok}" != "true" ]]; then
   exit 1
 fi
 
+if ! "${root_dir}/bin/verify-worker.sh"; then
+  echo "Worker counters or recording did not advance; attempting application rollback." >&2
+  if [[ -s "${state_dir}/previous-image" ]]; then
+    "${root_dir}/bin/rollback.sh"
+  fi
+  exit 1
+fi
+
 printf '%s\n' "${new_image}" > "${state_dir}/current-image"
 printf '%s\n' "${git_sha}" > "${state_dir}/current-git-sha"
 chmod 0600 "${state_dir}/current-image" "${state_dir}/current-git-sha"
 docker image prune --force --filter 'until=168h' >/dev/null
 echo "PAPER deployment passed health and execution-mode checks for ${git_sha}."
-

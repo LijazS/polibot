@@ -40,8 +40,19 @@ For the local API and PostgreSQL:
 docker compose up --build
 ```
 
-The health endpoint is `GET /health`. Redis is intentionally not included because
-the bootstrap has no justified use for it.
+Apply migrations before starting the local API and worker:
+
+```bash
+docker compose up -d postgres
+docker compose run --rm app alembic upgrade head
+docker compose up -d app worker
+```
+
+The internal endpoints are `GET /health`, `GET /ready`, `GET /status`, and
+`GET /metrics`. `polibot status`, `polibot markets`, `polibot opportunities`,
+`polibot paper-pnl`, `polibot worker-runs`, `polibot books --stale`, and
+`polibot report daily` are read-only operational commands. Redis is intentionally
+absent because the worker uses bounded in-process queues and PostgreSQL durability.
 
 ## Execution modes
 

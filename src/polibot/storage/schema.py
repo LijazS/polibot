@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     DateTime,
     ForeignKey,
     Index,
@@ -106,3 +107,77 @@ class ReconciliationRow(Base):
     reconciled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     status: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
     details_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class WorkerRunRow(Base):
+    __tablename__ = "worker_runs"
+
+    run_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    worker_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    stopped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    execution_mode: Mapped[str] = mapped_column(String(20), nullable=False)
+    application_version: Mapped[str] = mapped_column(String(50), nullable=False)
+    git_sha: Mapped[str] = mapped_column(String(64), nullable=False)
+    configuration_fingerprint: Mapped[str] = mapped_column(String(71), nullable=False)
+    strategies_json: Mapped[str] = mapped_column(Text, nullable=False)
+    selection_policy_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class WorkerHeartbeatRow(Base):
+    __tablename__ = "worker_heartbeats"
+
+    worker_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    run_id: Mapped[str] = mapped_column(
+        ForeignKey("worker_runs.run_id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_heartbeat_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    execution_mode: Mapped[str] = mapped_column(String(20), nullable=False)
+    current_status: Mapped[str] = mapped_column(String(30), nullable=False)
+    ready: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    websocket_connected: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    markets_discovered: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    markets_selected: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    markets_subscribed: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    messages_received: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    books_healthy: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    books_stale: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    strategy_evaluations: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    opportunities_detected: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    risk_approvals: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    paper_executions: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    recorder_queue_depth: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    recorder_dropped_events: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    database_errors: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    reconnect_count: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    last_strategy_cycle: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_error: Mapped[str | None] = mapped_column(Text)
+    application_version: Mapped[str] = mapped_column(String(50), nullable=False)
+    git_sha: Mapped[str] = mapped_column(String(64), nullable=False)
+    paper_initial_capital: Mapped[Decimal] = mapped_column(Numeric(38, 6), nullable=False)
+    paper_current_capital: Mapped[Decimal] = mapped_column(Numeric(38, 6), nullable=False)
+    paper_gross_pnl: Mapped[Decimal] = mapped_column(Numeric(38, 6), nullable=False)
+    paper_fees: Mapped[Decimal] = mapped_column(Numeric(38, 6), nullable=False)
+    paper_slippage: Mapped[Decimal] = mapped_column(Numeric(38, 6), nullable=False)
+    paper_net_pnl: Mapped[Decimal] = mapped_column(Numeric(38, 6), nullable=False)
+    database_size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    disk_used_percent: Mapped[Decimal] = mapped_column(Numeric(8, 3), nullable=False)
+
+
+class MarketSelectionRow(Base):
+    __tablename__ = "market_selections"
+    __table_args__ = (
+        UniqueConstraint("run_id", "observed_at", "market_id"),
+        Index("ix_market_selections_run_selected", "run_id", "selected"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(
+        ForeignKey("worker_runs.run_id", ondelete="CASCADE"), nullable=False
+    )
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    market_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    condition_id: Mapped[str | None] = mapped_column(String(255))
+    selected: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    reason: Mapped[str] = mapped_column(String(100), nullable=False)
