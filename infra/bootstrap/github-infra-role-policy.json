@@ -74,13 +74,19 @@
       "Action": [
         "s3:CreateBucket",
         "s3:DeleteBucket",
+        "s3:GetAccelerateConfiguration",
+        "s3:GetBucketAcl",
+        "s3:GetBucketCORS",
         "s3:GetLifecycleConfiguration",
         "s3:GetBucketOwnershipControls",
         "s3:GetBucketPolicy",
         "s3:GetBucketPublicAccessBlock",
+        "s3:GetBucketRequestPayment",
         "s3:GetBucketTagging",
         "s3:GetBucketVersioning",
+        "s3:GetBucketWebsite",
         "s3:GetEncryptionConfiguration",
+        "s3:GetReplicationConfiguration",
         "s3:ListBucket",
         "s3:PutLifecycleConfiguration",
         "s3:PutBucketOwnershipControls",
@@ -158,15 +164,22 @@
       }
     },
     {
+      "Sid": "GlobalReadOnlyInventory",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:DescribeAlarms",
+        "logs:DescribeLogGroups"
+      ],
+      "Resource": "*"
+    },
+    {
       "Sid": "CloudWatchManagement",
       "Effect": "Allow",
       "Action": [
         "cloudwatch:DeleteAlarms",
-        "cloudwatch:DescribeAlarms",
         "cloudwatch:PutMetricAlarm",
         "logs:CreateLogGroup",
         "logs:DeleteLogGroup",
-        "logs:DescribeLogGroups",
         "logs:ListTagsForResource",
         "logs:PutRetentionPolicy",
         "logs:TagResource"
