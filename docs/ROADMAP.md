@@ -35,8 +35,10 @@ Non-live infrastructure state: `DEPLOYED_PAPER` on 2026-09-05. The state machine
 fake-only boundaries, reconciliation, kill/recovery gates, dedicated AWS PAPER stack,
 OIDC workflow, and immutable SSM deployment path exist. AWS/GitHub bootstrap, Terraform
 apply, immutable image push, SSM deployment, container health, and PAPER/live-disable
-checks are verified. Sustained runtime, backup/restore, and empirical strategy evidence
-remain pending. The guarded micro-live exit gate is not met and LIVE remains hard-disabled.
+checks are verified after migration to `eu-west-2`. The host's geoblock response is
+blocked, so the deployment remains public-data PAPER only. Sustained runtime,
+backup/restore, and empirical strategy evidence remain pending. The guarded micro-live
+exit gate is not met and LIVE remains hard-disabled.
 
 ## V2.x — market-making shadow research
 

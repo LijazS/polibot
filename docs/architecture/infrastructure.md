@@ -26,8 +26,8 @@ provider, and GitHub roles remain outside the stack and survive teardown.
 
 ## Region assessment
 
-The original `us-east-1` PAPER host was destroyed before selecting `eu-west-2`. As of
-2026-09-05, Polymarket's official
+The original `us-east-1` PAPER host was destroyed before the replacement was deployed
+in `eu-west-2`. As of 2026-09-05, Polymarket's official
 [trading overview](https://docs.polymarket.com/trading/overview) identifies `eu-west-2`
 as the primary-server region and says approved KYC/KYB participants can obtain direct
 co-location there for the lowest possible latency. The same documentation identifies

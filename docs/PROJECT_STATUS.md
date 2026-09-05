@@ -25,7 +25,7 @@ Strategy effectiveness and long-running operational behavior are not proven.
 | Execution state machine | TESTED_OFFLINE | One-use approval, partial/second-leg/unknown/DB-failure paths, PostgreSQL transition journal |
 | Wallet / exchange / settlement boundaries | TESTED_OFFLINE | Protocols and deterministic fakes only; no real signer, authenticated transport, or broadcast |
 | Reconciliation / kill switches / recovery | TESTED_OFFLINE | State comparison, scoped blockers, rebuild/reconcile/unknown-state restart gate |
-| AWS PAPER deployment | MIGRATING_REGION | Original `us-east-1` stack destroyed by run `33964747292`; `eu-west-2` redeploy pending |
+| AWS PAPER deployment | DEPLOYED_PAPER | `eu-west-2` run `33976145081`; instance `i-03d8810150224343d`; SHA `fec85ec`; digest `sha256:5ceed0...1728a` |
 | AWS PAPER destruction | EXERCISED | Run `33964747292`; exact confirmation, protected plan/apply, OIDC, shared deployment lock, empty final state |
 | Shadow market making | TESTED_OFFLINE | Decimal midpoint/microprice/imbalance, inventory skew and shutdowns; fills/P&L `PENDING_DATA` |
 
@@ -50,7 +50,8 @@ Strategy effectiveness and long-running operational behavior are not proven.
   unsupported pending sufficient official specification.
 - AWS/GitHub bootstrap and the first PAPER deployment were verified. The original
   `us-east-1` stack was subsequently destroyed under workflow run `33964747292`; its
-  remote Terraform state is empty and the bootstrap state bucket/OIDC roles remain.
+  state was emptied before the replacement apply, and the bootstrap state bucket/OIDC
+  roles remained in place.
 - The first apply required least-privilege read-policy corrections. All partial state
   was reconciled through remote Terraform state; the final plan reports no changes.
 - The single-host local PostgreSQL volume has no deployed backup/restore mechanism;
@@ -60,8 +61,15 @@ Strategy effectiveness and long-running operational behavior are not proven.
   networking while preserving the remote-state bucket and OIDC roles.
 - Official Polymarket documentation places primary CLOB servers in `eu-west-2`, with
   direct lowest-latency co-location subject to KYC/KYB approval, and identifies
-  `eu-west-1` as the closest non-georestricted region. A replacement `eu-west-2` host
-  is pending deployment for PAPER/public-data use only.
+  `eu-west-1` as the closest non-georestricted region. The replacement `eu-west-2`
+  host is deployed for PAPER/public-data use only. Its geoblock check reports
+  `GB/ENG blocked=true`, so it is not authorized for order submission.
+- The `eu-west-2` deployment reports healthy EC2/system checks, SSM online, no inbound
+  security-group rules or SSH key, IMDSv2 required, healthy app/PostgreSQL containers,
+  loopback-only port 8000, no PostgreSQL port, PAPER mode, LIVE false, root-owned `0600`
+  secret files, immutable AES256 ECR, private encrypted/versioned S3, alarm `OK`, and
+  a refreshed no-change Terraform plan. One CLOB `/time` request took approximately
+  0.04 seconds; this is an observation, not a latency benchmark.
 
 ## Recommended next gate
 

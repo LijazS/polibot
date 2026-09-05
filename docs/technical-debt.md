@@ -20,11 +20,12 @@
   health verification are deployed. Rollback, host replacement, sustained operation,
   budget alerting, and database backup/restore still need operator exercises.
 - The first PAPER teardown completed after exposing and correcting a stateful
-  `force_destroy`/`force_delete` sequencing issue. Re-creation in `eu-west-2` is the
-  active infrastructure gate.
+  `force_destroy`/`force_delete` sequencing issue. The protected workflow now pre-arms
+  those flags, but that corrected sequence has not yet had a second destructive drill.
 - The selected `eu-west-2` placement is only for PAPER public-data collection. Measure
-  actual endpoint latency after deployment; never treat ordinary AWS placement as
-  direct co-location approval or a geoblock workaround.
+  sustained endpoint latency; the initial CLOB request was about 0.04 seconds and is
+  not a benchmark. The host reports `GB/ENG blocked=true`; never treat ordinary AWS
+  placement as direct co-location approval or a geoblock workaround.
 - No multi-day dataset exists. Rewards, opportunity frequency, fills, profitability,
   drawdown, reconciliation stability, and shadow-maker results are `PENDING_DATA`.
 ## AWS PAPER persistence

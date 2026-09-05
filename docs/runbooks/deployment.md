@@ -33,3 +33,18 @@ Workflow run `33963697738` deployed commit
 Independent SSM verification confirmed both containers healthy, loopback-only app
 publishing, no PostgreSQL port, PAPER mode, live disabled, and root-owned `0600`
 runtime files. A post-deploy Terraform plan reported no changes.
+
+## eu-west-2 migration evidence
+
+Destroy workflow run `33964747292` removed the original `us-east-1` stack and left
+empty remote state while preserving the bootstrap backend and OIDC roles. Deployment
+workflow run `33976145081` deployed commit
+`fec85ecd23b9b1db3ab260e4a4dbd1bc3f045830` in `eu-west-2` to instance
+`i-03d8810150224343d` as ECR digest
+`sha256:5ceed0cbb63ef41c0abb4b0bb0520a273609c7a6dbd5cdf6d8fc1005d021728a`.
+
+Independent checks confirmed the documented network isolation, IMDSv2, immutable
+image identity, healthy containers and API, PAPER/live-disable flags, root-only secret
+files, secured S3/ECR, alarm recovery to `OK`, and a refreshed no-change Terraform
+plan. The host geoblock response was `GB/ENG blocked=true`; this environment remains
+public-data PAPER only and must not submit orders.
