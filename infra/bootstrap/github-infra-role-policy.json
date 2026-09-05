@@ -180,7 +180,10 @@
       "Effect": "Allow",
       "Action": [
         "cloudwatch:DeleteAlarms",
+        "cloudwatch:ListTagsForResource",
         "cloudwatch:PutMetricAlarm",
+        "cloudwatch:TagResource",
+        "cloudwatch:UntagResource",
         "logs:CreateLogGroup",
         "logs:DeleteLogGroup",
         "logs:ListTagsForResource",
