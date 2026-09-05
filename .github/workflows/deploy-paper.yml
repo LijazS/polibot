@@ -47,6 +47,12 @@ jobs:
           alembic upgrade head --sql >/dev/null
           python scripts/check_doc_links.py
           bash -n deploy/deploy.sh deploy/healthcheck.sh deploy/rollback.sh
+          install -d /tmp/polibot-validation-secrets
+          printf 'POSTGRES_DB=polibot\nPOSTGRES_USER=polibot\nPOSTGRES_PASSWORD=not-a-secret\n' \
+            > /tmp/polibot-validation-secrets/postgres.env
+          printf 'POLIBOT_EXECUTION_MODE=paper\nPOLIBOT_LIVE_TRADING_ENABLED=false\nPOLIBOT_DATABASE_URL=postgresql+asyncpg://polibot:not-a-secret@postgres:5432/polibot\n' \
+            > /tmp/polibot-validation-secrets/runtime.env
+          export POLIBOT_SECRETS_DIR=/tmp/polibot-validation-secrets
           POLIBOT_IMAGE="484632959006.dkr.ecr.us-east-1.amazonaws.com/polibot-paper@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
             docker compose --file deploy/docker-compose.paper.yml config --quiet
           docker build --tag polibot-validation:"${GITHUB_SHA}" .
@@ -276,4 +282,3 @@ jobs:
             echo "- Execution mode: PAPER"
             echo "- Live trading enabled: false"
           } >> "${GITHUB_STEP_SUMMARY}"
-

@@ -5,7 +5,7 @@ services:
     image: postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
     restart: unless-stopped
     env_file:
-      - /opt/polibot/secrets/postgres.env
+      - ${POLIBOT_SECRETS_DIR:-/opt/polibot/secrets}/postgres.env
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U polibot -d polibot"]
       interval: 5s
@@ -22,7 +22,7 @@ services:
     image: ${POLIBOT_IMAGE:?POLIBOT_IMAGE must be an immutable ECR digest URI}
     restart: unless-stopped
     env_file:
-      - /opt/polibot/secrets/runtime.env
+      - ${POLIBOT_SECRETS_DIR:-/opt/polibot/secrets}/runtime.env
     depends_on:
       postgres:
         condition: service_healthy
