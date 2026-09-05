@@ -25,7 +25,7 @@ Strategy effectiveness and long-running operational behavior are not proven.
 | Execution state machine | TESTED_OFFLINE | One-use approval, partial/second-leg/unknown/DB-failure paths, PostgreSQL transition journal |
 | Wallet / exchange / settlement boundaries | TESTED_OFFLINE | Protocols and deterministic fakes only; no real signer, authenticated transport, or broadcast |
 | Reconciliation / kill switches / recovery | TESTED_OFFLINE | State comparison, scoped blockers, rebuild/reconcile/unknown-state restart gate |
-| AWS / Terraform | TESTED_OFFLINE | Format and validate pass; no plan/apply or cloud access |
+| AWS PAPER deployment | BOOTSTRAPPED | State bucket, exact-subject OIDC roles and protected GitHub environment verified; no plan/apply/deploy yet |
 | Shadow market making | TESTED_OFFLINE | Decimal midpoint/microprice/imbalance, inventory skew and shutdowns; fills/P&L `PENDING_DATA` |
 
 ## Evidence gates
@@ -47,8 +47,12 @@ Strategy effectiveness and long-running operational behavior are not proven.
   questions are `PENDING_DATA`.
 - Exact NegRisk conversion encoding and ambiguous/augmented structure semantics remain
   unsupported pending sufficient official specification.
-- Terraform was validated statically only; network, AMI, backend, monitoring alarms,
-  restore, deployment, and security review remain future operator work.
+- AWS/GitHub bootstrap is verified: encrypted/versioned/private state bucket, two
+  exact-subject OIDC roles, `paper` environment with `main` branch policy/reviewer,
+  seven non-secret variables, and zero environment secrets. Terraform plan/apply,
+  host bootstrap, monitoring, restore, and deployment remain unexecuted.
+- The single-host local PostgreSQL volume has no deployed backup/restore mechanism;
+  host replacement can lose PAPER data until that operational gate is implemented.
 
 ## Recommended next gate
 

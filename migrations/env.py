@@ -8,10 +8,12 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+from polibot.config import Settings
 from polibot.storage import schema as storage_schema  # noqa: F401
 from polibot.storage.database import Base
 
 config = context.config
+config.set_main_option("sqlalchemy.url", Settings().database_url)
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 target_metadata = Base.metadata

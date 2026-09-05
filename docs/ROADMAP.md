@@ -31,9 +31,12 @@ and reconciliation; kill/cancel controls and runbooks are exercised; and tightly
 capped structural execution has controlled evidence. This gate does not promote
 market making.
 
-Non-live infrastructure state: `TESTED_OFFLINE` on 2026-09-05. The state machine,
-fake-only boundaries, reconciliation, kill/recovery gates, and Terraform scaffold
-exist. The guarded micro-live exit gate is not met and LIVE remains hard-disabled.
+Non-live infrastructure state: `STATICALLY_VALIDATED` on 2026-09-05. The state machine,
+fake-only boundaries, reconciliation, kill/recovery gates, dedicated AWS PAPER stack,
+OIDC workflow, and immutable SSM deployment path exist. One-time AWS/GitHub bootstrap
+is verified; every cloud plan/apply/deployment remains pending workflow execution.
+Docker was unavailable for local container validation, which remains a mandatory CI
+job. The guarded micro-live exit gate is not met and LIVE remains hard-disabled.
 
 ## V2.x — market-making shadow research
 

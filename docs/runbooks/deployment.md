@@ -1,9 +1,22 @@
-# Deployment runbook
+# PAPER deployment runbook
 
-No production deployment is authorized during bootstrap. For local validation, copy
-safe configuration, keep paper mode, run CI-equivalent checks, build containers, and
-verify `/health`. A future production runbook must cover reviewed immutable artifacts,
-separate secrets/state, migrations/backups, readiness, explicit mode, exposure caps,
-operator approval, monitoring, and post-deploy reconciliation. Never use deployment
-location to evade platform restrictions.
+The only authorized cloud workflow is `.github/workflows/deploy-paper.yml`, manually
+dispatched from `main` after the `paper` environment approval. Complete and verify the
+one-time bootstrap runbook first.
 
+The workflow validates tests, formatting, types, migrations, container build, Compose,
+shell scripts, documentation, and Terraform. It then assumes the infrastructure role,
+plans and applies the PAPER stack, assumes the deployment role, builds the exact Git
+commit, pushes an immutable ECR tag, resolves its digest, uploads a SHA-specific bundle,
+and deploys through SSM. Concurrent deployments are serialized.
+
+On-host deployment creates a random PostgreSQL password only if root-only runtime files
+do not exist, pulls by digest, starts PostgreSQL, applies forward migrations, starts the
+app, and verifies `/health` reports `paper` and `live_trading_enabled=false`. A failed
+health check attempts application-image rollback. It never deploys a signer, private
+Polymarket key, or authenticated trading transport.
+
+After a successful run, inspect the workflow summary and CloudWatch log group
+`/polibot/paper/host`. Use SSM rather than SSH for diagnostics. Treat any mode mismatch,
+failed migration, unavailable SSM host, reconciliation fault, or unexplained restart as
+a failed deployment; do not weaken the checks.

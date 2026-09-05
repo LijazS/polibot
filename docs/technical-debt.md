@@ -16,8 +16,15 @@
 - The PostgreSQL execution journal is append/load capable, but full restart hydration
   and transactional persistence of proposal, approval, transition, and exposure in
   one unit of work require service-backed design and tests before live consideration.
-- Terraform needs a reviewed backend, VPC endpoints/NAT policy, immutable image
-  pipeline, alarms, restore exercise, deployment controls, and security review. It was
-  validated but never planned or applied.
+- The AWS PAPER stack, OIDC workflow, immutable image pipeline, SSM deploy, alarm, and
+  rollback path are locally validated but have never been planned, applied, or exercised
+  in AWS. One-time state/role/environment bootstrap remains pending manual approval.
 - No multi-day dataset exists. Rewards, opportunity frequency, fills, profitability,
   drawdown, reconciliation stability, and shadow-maker results are `PENDING_DATA`.
+## AWS PAPER persistence
+
+The low-cost PAPER design keeps PostgreSQL on the EC2 root volume. Terraform host
+replacement therefore destroys the database volume. Add an encrypted, tested backup
+and restore path before treating the environment as durable or storing irreplaceable
+research data. Application rollback also assumes forward migrations remain compatible
+with the previous image.

@@ -1,0 +1,279 @@
+name: Deploy PAPER to AWS
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: polibot-paper-deployment
+  cancel-in-progress: false
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  TF_DIR: infra/terraform/environments/paper
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require the protected default branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${GITHUB_REF}" == "refs/heads/main" ]] || {
+            echo "Deployment is restricted to refs/heads/main." >&2
+            exit 1
+          }
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+      - name: Validate application and deployment assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+          ruff check .
+          ruff format --check .
+          mypy src
+          pytest
+          python -m compileall -q src tests scripts
+          alembic upgrade head --sql >/dev/null
+          python scripts/check_doc_links.py
+          bash -n deploy/deploy.sh deploy/healthcheck.sh deploy/rollback.sh
+          POLIBOT_IMAGE="484632959006.dkr.ecr.us-east-1.amazonaws.com/polibot-paper@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
+            docker compose --file deploy/docker-compose.paper.yml config --quiet
+          docker build --tag polibot-validation:"${GITHUB_SHA}" .
+          terraform -chdir="${TF_DIR}" fmt -check -recursive
+          terraform -chdir="${TF_DIR}" init -backend=false -input=false
+          terraform -chdir="${TF_DIR}" validate
+
+  terraform-plan:
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: paper
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+      - name: Authenticate to the expected account with OIDC
+        uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6.2.4
+        with:
+          role-to-assume: ${{ vars.AWS_INFRA_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
+          role-session-name: polibot-plan-${{ github.run_id }}
+      - name: Verify identity and backend target
+        shell: bash
+        env:
+          EXPECTED_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_REGION_EXPECTED: ${{ vars.AWS_REGION }}
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+          TF_STATE_KEY: ${{ vars.TF_STATE_KEY }}
+          TF_STATE_REGION: ${{ vars.TF_STATE_REGION }}
+        run: |
+          set -euo pipefail
+          actual_account="$(aws sts get-caller-identity --query Account --output text)"
+          [[ "${actual_account}" == "${EXPECTED_ACCOUNT}" ]] || exit 1
+          [[ "${AWS_REGION}" == "${AWS_REGION_EXPECTED}" ]] || exit 1
+          printf 'Account=%s\nRegion=%s\nEnvironment=paper\nBackend=%s/%s\n' \
+            "${actual_account}" "${AWS_REGION}" "${TF_STATE_BUCKET}" "${TF_STATE_KEY}"
+          terraform -chdir="${TF_DIR}" init -reconfigure -input=false \
+            -backend-config="bucket=${TF_STATE_BUCKET}" \
+            -backend-config="key=${TF_STATE_KEY}" \
+            -backend-config="region=${TF_STATE_REGION}"
+          terraform -chdir="${TF_DIR}" validate
+          terraform -chdir="${TF_DIR}" plan -input=false -no-color
+
+  protected-apply:
+    needs: terraform-plan
+    runs-on: ubuntu-latest
+    environment: paper
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      instance_id: ${{ steps.outputs.outputs.instance_id }}
+      ecr_repository_url: ${{ steps.outputs.outputs.ecr_repository_url }}
+      data_bucket: ${{ steps.outputs.outputs.data_bucket }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+      - name: Authenticate to the expected account with OIDC
+        uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6.2.4
+        with:
+          role-to-assume: ${{ vars.AWS_INFRA_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
+          role-session-name: polibot-apply-${{ github.run_id }}
+      - name: Apply reviewed PAPER infrastructure
+        shell: bash
+        env:
+          EXPECTED_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+          TF_STATE_KEY: ${{ vars.TF_STATE_KEY }}
+          TF_STATE_REGION: ${{ vars.TF_STATE_REGION }}
+        run: |
+          set -euo pipefail
+          [[ "$(aws sts get-caller-identity --query Account --output text)" == "${EXPECTED_ACCOUNT}" ]] || exit 1
+          terraform -chdir="${TF_DIR}" init -reconfigure -input=false \
+            -backend-config="bucket=${TF_STATE_BUCKET}" \
+            -backend-config="key=${TF_STATE_KEY}" \
+            -backend-config="region=${TF_STATE_REGION}"
+          terraform -chdir="${TF_DIR}" plan -input=false -out=tfplan
+          terraform -chdir="${TF_DIR}" apply -input=false tfplan
+      - name: Capture non-sensitive Terraform outputs
+        id: outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "instance_id=$(terraform -chdir="${TF_DIR}" output -raw ec2_instance_id)" >> "${GITHUB_OUTPUT}"
+          echo "ecr_repository_url=$(terraform -chdir="${TF_DIR}" output -raw ecr_repository_url)" >> "${GITHUB_OUTPUT}"
+          echo "data_bucket=$(terraform -chdir="${TF_DIR}" output -raw application_data_bucket)" >> "${GITHUB_OUTPUT}"
+
+  build-and-push:
+    needs: protected-apply
+    runs-on: ubuntu-latest
+    environment: paper
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      image_uri: ${{ steps.image.outputs.image_uri }}
+      artifact_key: ${{ steps.bundle.outputs.artifact_key }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Authenticate to the deployment role with OIDC
+        uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6.2.4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
+          role-session-name: polibot-build-${{ github.run_id }}
+      - name: Build and push immutable image
+        id: image
+        shell: bash
+        env:
+          EXPECTED_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+          REPOSITORY_URL: ${{ needs.protected-apply.outputs.ecr_repository_url }}
+        run: |
+          set -euo pipefail
+          [[ "$(aws sts get-caller-identity --query Account --output text)" == "${EXPECTED_ACCOUNT}" ]] || exit 1
+          [[ "${REPOSITORY_URL}" =~ ^${EXPECTED_ACCOUNT}\.dkr\.ecr\.${AWS_REGION}\.amazonaws\.com/polibot-paper$ ]] || exit 1
+          registry="${REPOSITORY_URL%%/*}"
+          tag="sha-${GITHUB_SHA}"
+          aws ecr get-login-password --region "${AWS_REGION}" |
+            docker login --username AWS --password-stdin "${registry}" >/dev/null
+          docker build --pull --tag "${REPOSITORY_URL}:${tag}" .
+          docker push "${REPOSITORY_URL}:${tag}"
+          digest="$(aws ecr describe-images --repository-name polibot-paper \
+            --image-ids imageTag="${tag}" --query 'imageDetails[0].imageDigest' --output text)"
+          [[ "${digest}" =~ ^sha256:[a-f0-9]{64}$ ]] || exit 1
+          echo "image_uri=${REPOSITORY_URL}@${digest}" >> "${GITHUB_OUTPUT}"
+      - name: Upload SHA-specific deployment bundle
+        id: bundle
+        shell: bash
+        env:
+          DATA_BUCKET: ${{ needs.protected-apply.outputs.data_bucket }}
+        run: |
+          set -euo pipefail
+          [[ "${DATA_BUCKET}" =~ ^polibot-paper-data-[0-9]{12}-[a-z0-9-]+$ ]] || exit 1
+          artifact_key="deployments/${GITHUB_SHA}/polibot-deploy.tar.gz"
+          tar --create --gzip --file /tmp/polibot-deploy.tar.gz --directory deploy .
+          aws s3 cp /tmp/polibot-deploy.tar.gz "s3://${DATA_BUCKET}/${artifact_key}" --only-show-errors
+          echo "artifact_key=${artifact_key}" >> "${GITHUB_OUTPUT}"
+
+  ssm-deploy:
+    needs: [protected-apply, build-and-push]
+    runs-on: ubuntu-latest
+    environment: paper
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Authenticate to the deployment role with OIDC
+        uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6.2.4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
+          role-session-name: polibot-deploy-${{ github.run_id }}
+      - name: Verify host is running and online in SSM
+        shell: bash
+        env:
+          INSTANCE_ID: ${{ needs.protected-apply.outputs.instance_id }}
+        run: |
+          set -euo pipefail
+          [[ "${INSTANCE_ID}" =~ ^i-[a-f0-9]+$ ]] || exit 1
+          [[ "$(aws ec2 describe-instances --instance-ids "${INSTANCE_ID}" --query 'Reservations[0].Instances[0].State.Name' --output text)" == "running" ]] || exit 1
+          [[ "$(aws ssm describe-instance-information --filters Key=InstanceIds,Values="${INSTANCE_ID}" --query 'InstanceInformationList[0].PingStatus' --output text)" == "Online" ]] || exit 1
+      - name: Deploy immutable image through SSM
+        id: deploy
+        shell: bash
+        env:
+          INSTANCE_ID: ${{ needs.protected-apply.outputs.instance_id }}
+          DATA_BUCKET: ${{ needs.protected-apply.outputs.data_bucket }}
+          ARTIFACT_KEY: ${{ needs.build-and-push.outputs.artifact_key }}
+          IMAGE_URI: ${{ needs.build-and-push.outputs.image_uri }}
+        run: |
+          set -euo pipefail
+          release_dir="/opt/polibot/releases/${GITHUB_SHA}"
+          parameters="$(jq -cn \
+            --arg release_dir "${release_dir}" \
+            --arg bucket "${DATA_BUCKET}" \
+            --arg key "${ARTIFACT_KEY}" \
+            --arg image "${IMAGE_URI}" \
+            --arg sha "${GITHUB_SHA}" \
+            --arg region "${AWS_REGION}" \
+            '{commands:[
+              "set -eu",
+              "install -d -m 0750 " + $release_dir,
+              "aws s3 cp s3://" + $bucket + "/" + $key + " /tmp/polibot-deploy.tar.gz --only-show-errors",
+              "tar -xzf /tmp/polibot-deploy.tar.gz -C " + $release_dir,
+              "/usr/bin/bash " + $release_dir + "/deploy.sh " + $image + " " + $sha + " " + $region + " >>/var/log/polibot-deploy.log 2>&1"
+            ]}')"
+          command_id="$(aws ssm send-command \
+            --instance-ids "${INSTANCE_ID}" \
+            --document-name AWS-RunShellScript \
+            --comment "Polibot PAPER ${GITHUB_SHA}" \
+            --parameters "${parameters}" \
+            --query 'Command.CommandId' --output text)"
+          set +e
+          aws ssm wait command-executed --command-id "${command_id}" --instance-id "${INSTANCE_ID}"
+          wait_status=$?
+          set -e
+          status="$(aws ssm get-command-invocation --command-id "${command_id}" --instance-id "${INSTANCE_ID}" --query Status --output text)"
+          echo "SSM command ${command_id} status: ${status}"
+          if [[ ${wait_status} -ne 0 || "${status}" != "Success" ]]; then
+            aws ssm get-command-invocation --command-id "${command_id}" --instance-id "${INSTANCE_ID}" \
+              --query '{Status:Status,Output:StandardOutputContent,Error:StandardErrorContent}' --output json
+            exit 1
+          fi
+      - name: Deployment summary
+        if: always()
+        shell: bash
+        env:
+          INSTANCE_ID: ${{ needs.protected-apply.outputs.instance_id }}
+          IMAGE_URI: ${{ needs.build-and-push.outputs.image_uri }}
+        run: |
+          {
+            echo "## Polibot PAPER deployment"
+            echo "- Environment: paper"
+            echo "- AWS account: ${{ vars.AWS_ACCOUNT_ID }}"
+            echo "- AWS region: ${{ vars.AWS_REGION }}"
+            echo "- Instance: ${INSTANCE_ID}"
+            echo "- Git SHA: ${GITHUB_SHA}"
+            echo "- Image: ${IMAGE_URI}"
+            echo "- Result: ${{ job.status }}"
+            echo "- Execution mode: PAPER"
+            echo "- Live trading enabled: false"
+          } >> "${GITHUB_STEP_SUMMARY}"
+

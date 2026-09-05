@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+exec > >(tee -a /var/log/polibot-bootstrap.log) 2>&1
+
+dnf install -y docker amazon-cloudwatch-agent
+systemctl enable --now docker
+systemctl enable --now amazon-ssm-agent
+
+install -d -m 0755 /usr/local/lib/docker/cli-plugins
+curl --fail --silent --show-error --location \
+  --output /usr/local/lib/docker/cli-plugins/docker-compose \
+  "https://github.com/docker/compose/releases/download/${compose_version}/docker-compose-linux-x86_64"
+echo "${compose_sha256}  /usr/local/lib/docker/cli-plugins/docker-compose" | sha256sum --check
+chmod 0755 /usr/local/lib/docker/cli-plugins/docker-compose
+
+install -d -m 0750 /opt/polibot /opt/polibot/bin /opt/polibot/releases /opt/polibot/state
+install -d -m 0700 /opt/polibot/secrets
+touch /var/log/polibot-deploy.log
+chmod 0640 /var/log/polibot-bootstrap.log /var/log/polibot-deploy.log
+
+cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<'JSON'
+{
+  "agent": {"run_as_user": "root"},
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/polibot-bootstrap.log",
+            "log_group_name": "${log_group_name}",
+            "log_stream_name": "{instance_id}/bootstrap"
+          },
+          {
+            "file_path": "/var/log/polibot-deploy.log",
+            "log_group_name": "${log_group_name}",
+            "log_stream_name": "{instance_id}/deployment"
+          }
+        ]
+      }
+    }
+  }
+}
+JSON
+
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+  -a fetch-config -m ec2 \
+  -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+
+docker compose version
+echo "Polibot PAPER host bootstrap complete; no runtime secret has been created yet."
+
